@@ -9,25 +9,21 @@ public class Arithmetic {
 
     //Сумма чисел
     public int  summ() {
-        int summ = a + b;
-        return summ;
+        return a + b;
     }
 
     //Произведение чисел
     public int multiplication() {
-        int multiplication = a * b;
-        return multiplication;
+        return a * b;
     }
 
     //Максимальное из двух чисел
     public int maxNumbers() {
-        int maxNumbers = (a > b) ? a : b;
-        return maxNumbers;
+        return (a > b) ? a : b;
     }
 
     //Минимальное из двух чисел
     public int minNumbers() {
-        int minNumbers = (a > b) ? b : a;
-        return minNumbers;
+        return (a > b) ? b : a;
     }
 }
