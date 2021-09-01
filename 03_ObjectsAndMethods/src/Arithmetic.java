@@ -1,6 +1,6 @@
 public class Arithmetic {
-    int a = 0;
-    int b = 0;
+    int a;
+    int b;
 
     public Arithmetic (int a, int b) {
         this.a = a;
@@ -8,22 +8,26 @@ public class Arithmetic {
     }
 
     //Сумма чисел
-    public void summ() {
-        System.out.println("Сумма чисел: " + (a + b));
+    public int  summ() {
+        int summ = a + b;
+        return summ;
     }
 
     //Произведение чисел
-    public void multiplication() {
-        System.out.println("Произведение чисел: " + (a * b));
+    public int multiplication() {
+        int multiplication = a * b;
+        return multiplication;
     }
 
     //Максимальное из двух чисел
-    public void maxNumbers() {
-        System.out.println("Максимальное из чисел: " + ((a > b) ? a : b));
+    public int maxNumbers() {
+        int maxNumbers = (a > b) ? a : b;
+        return maxNumbers;
     }
 
     //Минимальное из двух чисел
-    public void minNumbers() {
-        System.out.println("Минимальное из чисел: " + ((a > b) ? b : a));
+    public int minNumbers() {
+        int minNumbers = (a > b) ? b : a;
+        return minNumbers;
     }
 }
