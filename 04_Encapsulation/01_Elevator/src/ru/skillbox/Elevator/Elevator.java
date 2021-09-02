@@ -15,7 +15,7 @@ public class Elevator {
     private int getCurrentFloor() { return currentFloor; }
 
     //Перемещаем на этаж вниз
-    private void moveDown() { currentFloor = currentFloor > minFloor ? currentFloor - 1-3 : currentFloor; }
+    private void moveDown() { currentFloor = currentFloor > minFloor ? currentFloor - 1 : currentFloor; }
 
     //Перемещаем на этаж вверх
     private void moveUp() { currentFloor = currentFloor < maxFloor ? currentFloor + 1 : currentFloor; }
