@@ -6,6 +6,9 @@ public class Basket {
     private int limit;
     private double totalWeight = 0;
 
+    private static int totalItemsCount;
+    private  static int totalItemsPrice;
+
     public Basket() {
         increaseCount(1);
         items = "Список товаров:";
@@ -31,6 +34,14 @@ public class Basket {
         Basket.count = Basket.count + count;
     }
 
+    public static void increaseItemsCount(int count) { Basket.totalItemsCount = Basket.totalItemsCount + count; }
+
+    public static void increaseItemsPrice(int price) { Basket.totalItemsPrice = Basket.totalItemsPrice + price; }
+
+    public static double getAverageItemPrice() { return totalItemsPrice / totalItemsCount; }
+
+    public static double getAverageBasketPrice() { return totalItemsPrice / count; }
+
     public void add(String name, int price) {
         add(name, price, 1, 0);
     }
@@ -54,6 +65,9 @@ public class Basket {
             count + " шт. - " + price;
         totalPrice = totalPrice + count * price;
         totalWeight = totalWeight + count * weight;
+
+        increaseItemsCount(count);
+        increaseItemsPrice(count * price);
     }
 
     public void clear() {
