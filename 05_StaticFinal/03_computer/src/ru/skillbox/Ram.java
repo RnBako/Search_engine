@@ -15,11 +15,23 @@ public class Ram {
         return ramType;
     }
 
+    public Ram setRamType(RamType ramType) {
+        return new Ram(ramType, ramSize, weight);
+    }
+
     public RamSize getRamSize() {
         return ramSize;
     }
 
+    public Ram setRamSize(RamSize ramSize) {
+        return new Ram(ramType, ramSize, weight);
+    }
+
     public int getWeight() {
         return weight;
+    }
+
+    public Ram setWeight (int weight) {
+        return new Ram(ramType, ramSize, weight);
     }
 }

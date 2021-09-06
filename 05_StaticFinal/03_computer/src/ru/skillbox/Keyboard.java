@@ -15,11 +15,23 @@ public class Keyboard {
         return keyboardType;
     }
 
+    public Keyboard setKeyboardType(KeyboardType keyboardType) {
+        return new Keyboard(keyboardType, isBacklight, weight);
+    }
+
     public IsBacklight getIsBacklight() {
         return isBacklight;
     }
 
+    public Keyboard setIsBacklight(IsBacklight isBacklight) {
+        return new Keyboard(keyboardType, isBacklight, weight);
+    }
+
     public int getWeight() {
         return weight;
+    }
+
+    public Keyboard setWeight(int weight) {
+        return new Keyboard(keyboardType, isBacklight, weight);
     }
 }

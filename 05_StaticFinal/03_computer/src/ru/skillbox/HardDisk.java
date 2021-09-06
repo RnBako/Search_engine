@@ -15,11 +15,23 @@ public class HardDisk {
         return diskType;
     }
 
+    public HardDisk setDiskType(DiskType diskType) {
+        return new HardDisk(diskType, diskSize, weight);
+    }
+
     public DiskSize getDiskSize() {
         return diskSize;
     }
 
+    public HardDisk setDiskSize(DiskSize diskSize) {
+        return new HardDisk(diskType, diskSize, weight);
+    }
+
     public int getWeight() {
         return weight;
+    }
+
+    public HardDisk setWeight(int weight) {
+        return new HardDisk(diskType, diskSize, weight);
     }
 }

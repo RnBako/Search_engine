@@ -17,15 +17,31 @@ public class Processor {
         return frequency;
     }
 
+    public Processor setFrequency(Frequency frequency) {
+        return new Processor(frequency, core, processorVendor, weight);
+    }
+
     public Core getCore() {
         return core;
+    }
+
+    public Processor setCore(Core core) {
+        return new Processor(frequency, core, processorVendor, weight);
     }
 
     public ProcessorVendor getProcessorVendor() {
         return processorVendor;
     }
 
+    public Processor setProcessorVendor(ProcessorVendor processorVendor) {
+        return new Processor(frequency, core, processorVendor, weight);
+    }
+
     public int getWeight() {
         return weight;
+    }
+
+    public Processor setWeight (int weight) {
+        return new Processor(frequency, core, processorVendor, weight);
     }
 }
