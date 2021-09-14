@@ -17,9 +17,7 @@ public class Main {
     Matcher matcher = pattern.matcher(text);
     int salarySum = 0;
     while (matcher.find()) {
-      int start = matcher.start();
-      int end = matcher.end();
-      salarySum += Integer.parseInt(text.substring(start, end).trim());
+      salarySum += Integer.parseInt(matcher.group().trim());
     }
     return salarySum;
   }
