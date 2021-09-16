@@ -1,16 +1,18 @@
 public abstract class Client {
 
+    private double amount = 0.0;
+
     public double getAmount() {
-        //TODO: реализуйте метод и удалите todo
-        return 0;
+        return amount;
     }
 
     public void put(double amountToPut) {
-        //TODO: реализуйте метод и удалите todo
+        if (amountToPut > 0) { amount += amountToPut; }
     }
 
     public void take(double amountToTake) {
-        //TODO: реализуйте метод и удалите todo
+        if (amountToTake < amount) { amount -= amountToTake; }
     }
 
+    public abstract void  printAmountInfo ();
 }
