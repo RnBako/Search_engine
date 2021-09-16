@@ -12,6 +12,10 @@ public class Main {
 
     public static void main(String[] args) {
         List<String> list = CoolNumbers.generateCoolNumbers();
+        Collections.sort(list);
+        HashSet<String> hashList = new HashSet<>(list);
+        TreeSet<String> treeList = new TreeSet<>(list);
+
         Scanner scanner = new Scanner(System.in);
         while (true) {
             System.out.print("Введите номер в формате Х000ХХ000 или 0 для выхода: ");
@@ -23,21 +27,16 @@ public class Main {
                 long finishTime = System.nanoTime();
                 System.out.println("Поиск перебором: номер " + (isFind ? "найден" : "не найден") + ", поиск занял " + (finishTime - startTime) + "нс");
 
-                Collections.sort(list);
                 startTime = System.nanoTime();
                 isFind = CoolNumbers.binarySearchInList(list, number);
                 finishTime = System.nanoTime();
                 System.out.println("Бинарный поиск: номер " + (isFind ? "найден" : "не найден") + ", поиск занял " + (finishTime - startTime) + "нс");
 
-                Collections.sort(list);
-                HashSet<String> hashList = new HashSet<>(list);
                 startTime = System.nanoTime();
                 isFind = CoolNumbers.searchInHashSet(hashList, number);
                 finishTime = System.nanoTime();
                 System.out.println("Поиск в HashSet: номер " + (isFind ? "найден" : "не найден") + ", поиск занял " + (finishTime - startTime) + "нс");
 
-                Collections.sort(list);
-                TreeSet<String> treeList = new TreeSet<>(list);
                 startTime = System.nanoTime();
                 isFind = CoolNumbers.searchInTreeSet(treeList, number);
                 finishTime = System.nanoTime();
