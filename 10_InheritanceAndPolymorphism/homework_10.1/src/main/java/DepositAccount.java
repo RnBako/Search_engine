@@ -2,7 +2,7 @@ import java.time.LocalDate;
 
 public class DepositAccount extends BankAccount {
 
-    LocalDate lastIncome;
+    private LocalDate lastIncome;
 
     public void put(double amountToPut) {
         super.put(amountToPut);
