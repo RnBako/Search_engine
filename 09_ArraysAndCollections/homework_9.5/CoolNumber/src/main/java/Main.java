@@ -29,12 +29,14 @@ public class Main {
                 finishTime = System.nanoTime();
                 System.out.println("Бинарный поиск: номер " + (isFind ? "найден" : "не найден") + ", поиск занял " + (finishTime - startTime) + "нс");
 
+                Collections.sort(list);
                 HashSet<String> hashList = new HashSet<>(list);
                 startTime = System.nanoTime();
                 isFind = CoolNumbers.searchInHashSet(hashList, number);
                 finishTime = System.nanoTime();
                 System.out.println("Поиск в HashSet: номер " + (isFind ? "найден" : "не найден") + ", поиск занял " + (finishTime - startTime) + "нс");
 
+                Collections.sort(list);
                 TreeSet<String> treeList = new TreeSet<>(list);
                 startTime = System.nanoTime();
                 isFind = CoolNumbers.searchInTreeSet(treeList, number);
