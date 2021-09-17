@@ -1,6 +1,6 @@
 import java.time.LocalDate;
 
-public class DepositAccount extends BankAccount {
+class DepositAccount extends BankAccount {
 
     protected LocalDate lastIncome;
 
