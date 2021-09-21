@@ -22,7 +22,11 @@ public class Main {
             } else if (tokens[0].equals("list")) {
                 executor.listCustomers();
             } else if (tokens[0].equals("remove")) {
-                executor.removeCustomer(tokens[1]);
+                try {
+                    executor.removeCustomer(tokens[1]);
+                } catch (Exception ex) {
+                    System.out.println("Проблема: " + ex.getMessage());
+                }
             } else if (tokens[0].equals("count")) {
                 System.out.println("There are " + executor.getCount() + " customers");
             } else if (tokens[0].equals("help")) {
