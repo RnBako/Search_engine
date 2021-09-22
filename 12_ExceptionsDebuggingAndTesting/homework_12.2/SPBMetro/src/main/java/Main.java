@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Main {
-    private static final String DATA_FILE = "src/main/resources/map.json";
+    private static final String DATA_FILE = "C:/Users/AVK/Documents/Java/java_basics/12_ExceptionsDebuggingAndTesting/homework_12.2/SPBMetro/src/main/resources/map.json";
     private static Scanner scanner;
 
     private static StationIndex stationIndex;
