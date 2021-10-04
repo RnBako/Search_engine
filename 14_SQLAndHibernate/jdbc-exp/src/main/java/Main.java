@@ -19,7 +19,6 @@ public class Main {
             resultSet.close();
             statement.close();
             connection.close();
-
         } catch (Exception ex) {
             ex.printStackTrace();
         }
