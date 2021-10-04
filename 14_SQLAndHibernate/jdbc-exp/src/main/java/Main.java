@@ -1,26 +1,25 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.Metadata;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class Main {
     public static void main(String[] args) {
-        String url = "jdbc:mysql://localhost:3306/skillbox";
-        String usr = "root";
-        String pass = "mtesttest";
+        StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure("hibernate.cfg.xml").build();
+        Metadata metadata = new MetadataSources(registry).getMetadataBuilder().build();
+        SessionFactory sessionFactory = metadata.getSessionFactoryBuilder().build();
 
-        try {
-            Connection connection = DriverManager.getConnection(url, usr, pass);
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("select pl.course_name, count(MONTH(pl.subscription_date))/8 as avg_purchase from purchaseList pl group by pl.course_name");
-            while (resultSet.next()) {
-                System.out.println(resultSet.getString("course_name") + " - " + resultSet.getString("avg_purchase") );
-            }
-            resultSet.close();
-            statement.close();
-            connection.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        Session session = sessionFactory.openSession();
+
+        List<Course> courses = session.createQuery("from Course c").list();
+        courses.forEach(course -> System.out.println("На курсе \"" + course.getName() + "\" " + course.getStudentsCount() + " студентов."));
+
+        sessionFactory.close();
     }
 }
