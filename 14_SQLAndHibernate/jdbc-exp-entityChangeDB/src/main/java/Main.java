@@ -1,13 +1,13 @@
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.query.Query;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,7 +29,7 @@ public class Main {
             LinkedPurchaseList linkedPurchase = new LinkedPurchaseList();
             linkedPurchase.setStudent(students.stream().filter(student -> student.getName().equals(purchase.getStudentName())).collect(Collectors.toList()).get(0));
             linkedPurchase.setCourse(courses.stream().filter(course -> course.getName().equals(purchase.getCourseName())).collect(Collectors.toList()).get(0));
-            System.out.println(linkedPurchase.getStudent().getId() + " - " + linkedPurchase.getCourse().getId());
+            System.out.println(linkedPurchase.getStudent().getName() + " - " + linkedPurchase.getCourse().getName());
             session.save(linkedPurchase);
         });
 

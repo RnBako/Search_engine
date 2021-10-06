@@ -1,19 +1,20 @@
 import javax.persistence.*;
+import java.io.Serializable;
 
 @Entity
 @Table(name = "LinkedPurchaseList")
-public class LinkedPurchaseList {
+@IdClass(LinkedPurchaseListKey.class)
+public class LinkedPurchaseList  implements Serializable {
     @EmbeddedId
     private LinkedPurchaseListKey id;
 
-    @MapsId("student_id")
     @ManyToOne(optional=false, cascade= CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", nullable = false, insertable = false, updatable = false)
+    @JoinColumn(name = "student_id", insertable = false, updatable = false)
     private Student student;
 
-    @MapsId("course_id")
+
     @ManyToOne (optional=false, cascade=CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false, insertable = false, updatable = false)
+    @JoinColumn(name = "course_id", insertable = false, updatable = false)
     private Course course;
 
     public Student getStudent() {

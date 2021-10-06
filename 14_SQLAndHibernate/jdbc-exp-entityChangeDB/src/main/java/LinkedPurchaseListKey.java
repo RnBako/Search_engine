@@ -1,36 +1,37 @@
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.GeneratedValue;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
 
 @Embeddable
 public class LinkedPurchaseListKey implements Serializable {
-    @GeneratedValue
-    @Column(name = "student_id")
-    private int studentId;
-    @GeneratedValue
-    @Column(name = "course_id")
-    private int courseId;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "student_id", nullable = false, insertable = false, updatable = false)
+    private Student student;
+
+
+    @ManyToOne ( fetch = FetchType.EAGER)
+    @JoinColumn(name = "course_id", nullable = false, insertable = false, updatable = false)
+    private Course course;
 
     public LinkedPurchaseListKey() {
         super();
     }
 
-    public int getStudentId() {
-        return studentId;
+    public Student getStudent() {
+        return student;
     }
 
-    public void setStudentId(int studentId) {
-        this.studentId = studentId;
+    public void setStudent(Student student) {
+        this.student = student;
     }
 
-    public int getCourseId() {
-        return courseId;
+    public Course getCourse() {
+        return course;
     }
 
-    public void setCourseId(int courseId) {
-        this.courseId = courseId;
+    public void setCourse(Course course) {
+        this.course = course;
     }
 
     @Override
@@ -38,11 +39,11 @@ public class LinkedPurchaseListKey implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LinkedPurchaseListKey that = (LinkedPurchaseListKey) o;
-        return studentId == that.studentId && courseId == that.courseId;
+        return student.equals(that.student) && course.equals(that.course);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(studentId, courseId);
+        return Objects.hash(student, course);
     }
 }
