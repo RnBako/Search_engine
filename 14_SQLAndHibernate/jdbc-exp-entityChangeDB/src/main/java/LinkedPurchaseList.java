@@ -8,12 +8,12 @@ public class LinkedPurchaseList  implements Serializable {
     @EmbeddedId
     private LinkedPurchaseListKey id;
 
-    @ManyToOne(optional=false, cascade= CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(optional=false, cascade= CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", insertable = false, updatable = false)
     private Student student;
 
 
-    @ManyToOne (optional=false, cascade=CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne (optional=false, cascade=CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id", insertable = false, updatable = false)
     private Course course;
 
@@ -32,4 +32,5 @@ public class LinkedPurchaseList  implements Serializable {
     public void setCourse(Course course) {
         this.course = course;
     }
+
 }

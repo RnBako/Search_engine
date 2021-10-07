@@ -7,11 +7,13 @@ public class LinkedPurchaseListKey implements Serializable {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "student_id", nullable = false, insertable = false, updatable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Student student;
 
 
     @ManyToOne ( fetch = FetchType.EAGER)
     @JoinColumn(name = "course_id", nullable = false, insertable = false, updatable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Course course;
 
     public LinkedPurchaseListKey() {
