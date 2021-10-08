@@ -4,48 +4,25 @@ import java.io.File;
 
 public class Main {
 
+    private static  int newWidth = 300;
+
     public static void main(String[] args) {
-        String srcFolder = "/users/sortedmap/Desktop/src";
-        String dstFolder = "/users/sortedmap/Desktop/dst";
+        String srcFolder = "C:/$D/src";
+        String dstFolder = "C:/$D/dst";
 
         File srcDir = new File(srcFolder);
 
         long start = System.currentTimeMillis();
 
         File[] files = srcDir.listFiles();
+        int coreCount = Runtime.getRuntime().availableProcessors();
 
-        try {
-            for (File file : files) {
-                BufferedImage image = ImageIO.read(file);
-                if (image == null) {
-                    continue;
-                }
-
-                int newWidth = 300;
-                int newHeight = (int) Math.round(
-                    image.getHeight() / (image.getWidth() / (double) newWidth)
-                );
-                BufferedImage newImage = new BufferedImage(
-                    newWidth, newHeight, BufferedImage.TYPE_INT_RGB
-                );
-
-                int widthStep = image.getWidth() / newWidth;
-                int heightStep = image.getHeight() / newHeight;
-
-                for (int x = 0; x < newWidth; x++) {
-                    for (int y = 0; y < newHeight; y++) {
-                        int rgb = image.getRGB(x * widthStep, y * heightStep);
-                        newImage.setRGB(x, y, rgb);
-                    }
-                }
-
-                File newFile = new File(dstFolder + "/" + file.getName());
-                ImageIO.write(newImage, "jpg", newFile);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        for (int i = 1; i <= coreCount; i++) {
+            int divider = files.length / coreCount;
+            File[] filesForCore = (i != coreCount) ? new File[divider] : new File[files.length - ((divider) * (coreCount - 1))];
+            System.arraycopy(files, (i-1) * divider, filesForCore, 0, filesForCore.length);
+            ImageResizer resizer = new ImageResizer(filesForCore, newWidth, dstFolder, start);
+            resizer.start();
         }
-
-        System.out.println("Duration: " + (System.currentTimeMillis() - start));
     }
 }
