@@ -3,7 +3,6 @@ import junit.framework.TestCase;
 public class TransactionsTest extends TestCase {
 
     private static Bank bank = new Bank();
-    private static int threadCount = 100;
 
     @Override
     protected void setUp() throws Exception {

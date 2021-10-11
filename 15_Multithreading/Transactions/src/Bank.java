@@ -1,6 +1,7 @@
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Bank {
 
@@ -8,7 +9,7 @@ public class Bank {
     private final Random random = new Random();
 
     public Bank() {
-        this.accounts = new HashMap<>();
+        this.accounts = new ConcurrentHashMap<>();
     }
 
     public synchronized boolean isFraud(String fromAccountNum, String toAccountNum, long amount)
