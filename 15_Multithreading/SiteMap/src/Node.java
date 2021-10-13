@@ -4,8 +4,8 @@ import java.util.Collection;
 
 public class Node {
 
-    private String url;
-    private Collection<Node> children = new ArrayList<>();
+    private final String url;
+    private final Collection<Node> children = new ArrayList<>();
 
     public Node (String url) {
         this.url = url;
