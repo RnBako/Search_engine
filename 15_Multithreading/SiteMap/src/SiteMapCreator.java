@@ -24,33 +24,39 @@ public class SiteMapCreator extends RecursiveTask<Node> {
             Document document = Jsoup.connect(node.getValue()).maxBodySize(0).get();
             Elements hrefUI = document.select("a");
             for (int i = 0; i < hrefUI.size(); i++) {
-                if (hrefUI.get(i).attr("href").isEmpty()) {
+                String root = node.getValue().substring(0, node.getValue().lastIndexOf(".ru") + 4);
+                if (hrefUI.get(i).attr("href").isEmpty() ||
+                        hrefUI.get(i).attr("href").contains("%") ||
+                        hrefUI.get(i).attr("href").contains(".pdf") ||
+                        hrefUI.get(i).attr("href").contains(".jpg")) {
                     continue;
                 } else if (hrefUI.get(i).attr("href").charAt(0) == '/' && hrefUI.get(i).attr("href").length() > 1) {
-                    String root = node.getValue().substring(0, node.getValue().lastIndexOf(".ru") + 4);
                     String child = hrefUI.get(i).attr("href").substring(1);
+                    String parent = node.getValue().substring(0, node.getValue().lastIndexOf("/")+1);
+                    String childCheck = root + child.substring(0, child.lastIndexOf("/")+1);
                     if (!node.getValue().equals(root + child) &&
                             node.getChildren().stream().filter(n -> n.getValue().equals(root + child)).count() == 0 &&
-                            siteList.get(root + child) == null) {
+                            siteList.get(root + child) == null &&
+                            !parent.equals(childCheck)) {
                         SiteMapCreator task = new SiteMapCreator(root + child);
+                        task.fork();
+                        taskList.add(task);
+                    }
+                } else if (hrefUI.get(i).attr("href").contains(root)) {
+                    if (siteList.get(hrefUI.get(i).attr("href")) == null) {
+                        SiteMapCreator task = new SiteMapCreator(hrefUI.get(i).attr("href"));
                         task.fork();
                         taskList.add(task);
                     }
                 }
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage());
         }
 
         for (SiteMapCreator task : taskList) {
             Node child = task.join();
-            Node parent = siteList.get(child.getValue().substring(0, child.getValue().lastIndexOf("/")+1));
-            if (parent.getValue().equals(child.getValue())) {
-                node.addChildren(child);
-            }
-            else {
-                parent.addChildren(child);
-            }
+            node.addChildren(child);
         }
         return node;
     }
