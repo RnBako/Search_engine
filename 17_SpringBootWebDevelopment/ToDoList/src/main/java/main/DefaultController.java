@@ -7,6 +7,7 @@ import java.util.Date;
 
 @RestController
 public class DefaultController {
+
     @RequestMapping("/")
     public String index() {
         return (new Date()).toString();
