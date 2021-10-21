@@ -1,4 +1,4 @@
-package main;
+package controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -10,6 +10,6 @@ public class DefaultController {
 
     @RequestMapping("/")
     public String index() {
-        return (new Date()).toString();
+        return "Текущая дата: " + (new Date()).toString();
     }
 }
