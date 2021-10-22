@@ -2,9 +2,9 @@ $(function(){
 
     const appendTask = function(data){
         var taskCode = '<a href="#" class="task-link" data-id="' +
-            data.id + '">' + data.name + '</a><br>';
-        $('#task-list')
-            .append('<div>' + taskCode + '</div>');
+            data.id + '">' + data.description + '</a><br>';
+        $('#todo-list')
+        .append('<div>' + taskCode + '</div>');
     };
 
     //Loading tasks on load page
