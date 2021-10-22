@@ -1,5 +1,6 @@
-package model;
+package repository;
 
+import model.Task;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

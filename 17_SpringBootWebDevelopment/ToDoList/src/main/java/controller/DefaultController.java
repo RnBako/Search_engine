@@ -1,15 +1,26 @@
 package controller;
 
+import model.Task;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import repository.TaskRepository;
 
-import java.util.Date;
+import java.util.ArrayList;
 
-@RestController
+@Controller
 public class DefaultController {
+    @Autowired
+    TaskRepository taskRepository;
 
     @RequestMapping("/")
-    public String index() {
-        return "Текущая дата: " + (new Date()).toString();
+    public String index(Model model) {
+        Iterable<Task> taskIterable = taskRepository.findAll();
+        ArrayList<Task> tasks = new ArrayList<>();
+        taskIterable.forEach(t -> tasks.add(t));
+        model.addAttribute("tasks", tasks);
+        model.addAttribute("tasksCount", tasks.size());
+        return "index";
     }
 }

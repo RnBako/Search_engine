@@ -1,6 +1,6 @@
 package controller;
 
-import model.TaskRepository;
+import repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,25 +32,6 @@ public class TaskController {
         return newTask.getId();
     }
 
-    @PutMapping("/tasks/")
-    public ResponseEntity putAll (@RequestBody ArrayList<Task> tasks) {
-        try {
-            for (Task task : tasks) {
-                Optional<Task> optionalTask = taskRepository.findById(task.getId());
-                if (optionalTask.isPresent()) {
-                    if (task.getFromDate() == null)
-                        task.setFromDate(Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-                    if (task.getToDate() == null)
-                        task.setToDate(Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-                    taskRepository.save(task);
-                }
-            }
-                return ResponseEntity.status(HttpStatus.OK).body("Задачи обновлены!");
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
-        }
-    }
-
     @DeleteMapping("/tasks/")
     public ResponseEntity deleteAll () {
         taskRepository.deleteAll();
@@ -62,13 +43,6 @@ public class TaskController {
         Optional<Task> task = taskRepository.findById(id);
         if (!task.isPresent()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         return new ResponseEntity(task.get(), HttpStatus.OK);
-    }
-
-    @PostMapping("/tasks/{id}")
-    public ResponseEntity addTask (@PathVariable int id) {
-        Optional<Task> optionalTask = taskRepository.findById(id);
-        if (!optionalTask.isPresent()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Задачи с таким Id не существует, воспользуйтесь разделом \"Добавить задачу\"!");
-        else return ResponseEntity.status(HttpStatus.OK).body("Задача с таким Id существует! Воспользуйтесь разделом изменения задач, если необходимо её изменить.");
     }
 
     @PutMapping("/tasks/{id}")
