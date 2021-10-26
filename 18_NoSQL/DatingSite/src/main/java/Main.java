@@ -9,9 +9,10 @@ public class Main {
         redisStorage.init();
 
         generateUserQueue(redisStorage);
-        for (int second = 0; second <= 60; second++){
+        for (int second = 1; second <= 60; second++){
             if (second % 10 == 0) {
-                redisStorage.addInQuery(new Random().nextInt(USER_COUNT));
+                int generousUser = new Random().nextInt(USER_COUNT);
+                redisStorage.upInQuery(generousUser);
             }
             redisStorage.showUser();
             Thread.sleep(1000);

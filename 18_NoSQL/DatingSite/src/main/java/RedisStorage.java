@@ -38,9 +38,14 @@ public class RedisStorage {
         userQuery.add(getTime(), String.valueOf(userId));
     }
 
+    public void upInQuery(int userId) {
+        System.out.println("> Пользователь " + userId + " оплатил платную услугу");
+        userQuery.add(userQuery.getScore(userQuery.first()) - 1, String.valueOf(userId));
+    }
+
     public void showUser() {
         String user = userQuery.first();
-        System.out.println("Показали - Пользователя " + user);
+        System.out.println("— На главной странице показываем пользователя " + user);
         userQuery.add(getTime(), user);
     }
 }
