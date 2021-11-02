@@ -2,19 +2,22 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
 public class XMLHandler extends DefaultHandler {
     private Voter voter;
-    private static SimpleDateFormat birthDayFormat = new SimpleDateFormat("yyyy.MM.dd");
+    //private static SimpleDateFormat birthDayFormat = new SimpleDateFormat("yyyy.MM.dd");
     private static SimpleDateFormat visitDateFormat = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");
-    private HashMap<Voter, Integer> voterCounts;
+    //private HashMap<Voter, Integer> voterCounts;
     private HashMap<Integer, WorkTime> voteStationWorkTimes;
+    private int maxBulkSize = 10000;
+    private int bulkSize = 0;
 
     public XMLHandler () {
-        voterCounts = new HashMap<>();
+        //voterCounts = new HashMap<>();
         voteStationWorkTimes = new HashMap<>();
     }
 
@@ -22,12 +25,9 @@ public class XMLHandler extends DefaultHandler {
     public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
         try {
             if (qName.equals("voter") && voter == null) {
-                Date birthDay = birthDayFormat.parse(attributes.getValue("birthDay"));
-                voter = new Voter(attributes.getValue("name"), birthDay);
+                DBConnection.countVoter(attributes.getValue("name"), attributes.getValue("birthDay"));
+                bulkSize++;
             } else  if (qName.equals("visit") && voter != null) {
-                int count = voterCounts.getOrDefault(voter, 0);
-                voterCounts.put(voter, count + 1);
-
                 int station = Integer.parseInt(attributes.getValue("station"));
                 Date time = visitDateFormat.parse(attributes.getValue("time"));
                 WorkTime workTime = voteStationWorkTimes.get(station);
@@ -53,17 +53,28 @@ public class XMLHandler extends DefaultHandler {
 
     @Override
     public void endElement(String uri, String localName, String qName) throws SAXException {
-        if (qName.equals("voter")) {
-            voter = null;
+        try {
+            if (bulkSize == maxBulkSize) {
+                DBConnection.executeMultiInsert();
+                bulkSize = 0;
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 
-    public void printDuplicatedVoters () {
-        System.out.println("Duplicated voters: ");
-        for (Voter voter : voterCounts.keySet()) {
-            int count = voterCounts.get(voter);
-            if (count > 1) System.out.println(voter.toString() + " - " + count);
+    @Override
+    public void endDocument() throws SAXException {
+        try {
+            DBConnection.executeMultiInsert();
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
+    }
+
+    public void printDuplicatedVoters () throws SQLException {
+        System.out.println("Duplicated voters: ");
+        DBConnection.printVoterCounts();
     }
 
     public void printStationWorkTimes() {

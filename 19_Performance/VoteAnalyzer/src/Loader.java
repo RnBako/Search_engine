@@ -21,17 +21,20 @@ public class Loader {
     private static HashMap<Voter, Integer> voterCounts = new HashMap<>();
 
     public static void main(String[] args) throws Exception {
-        String fileName = "C:\\Users\\AVK\\Documents\\Java\\java_basics\\19_Performance\\VoteAnalyzer\\res\\data-18M.xml";
+        String fileName = "C:\\Users\\AVK\\Documents\\Java\\java_basics\\19_Performance\\VoteAnalyzer\\res\\data-1572M.xml";
 
         long usageMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        long start = System.currentTimeMillis();
         SAXParserFactory factory = SAXParserFactory.newInstance();
         SAXParser parser = factory.newSAXParser();
         XMLHandler handler = new XMLHandler();
         parser.parse(new File(fileName), handler);
         usageMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - usageMemory;
         System.out.println("Потребление памяти - " + usageMemory);
+        System.out.println("Время выполнения - " + (System.currentTimeMillis() - start) + " мс");
 
-        handler.printStationWorkTimes();
+        start = System.currentTimeMillis();
         handler.printDuplicatedVoters();
+        System.out.println("Время запроса дублей - " + (System.currentTimeMillis() - start) + " мс");
     }
 }
