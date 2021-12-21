@@ -49,37 +49,38 @@ public class SearchSystem {
         List<Field> fields = session.createQuery("from Field f").list();
         Document document = new Document("");
         HashMap<String, Integer> lemmaMap;
-        Element snippet = new Element("a");
+        String snippetText = "";
 
         for (SearchResult searchResult : searchResults) {
             searchResult.setRelativeRelevance(searchResult.getAbsoluteRelevance() / maxRelevance);
+            Element snippet = new Element("p");
             document = Jsoup.parse(searchResult.getPage().getContent());
-            System.out.println(document.select(":contains(достав)").get(0));
-//            for (Element el : document.select(":contains(достав)")) {
-//                System.out.println(el.textNodes().size());
-//            }
-//            for (Field field : fields) {
-//                Elements elements = document.select(field.getName());
-//                for (Element element : elements) {
-//                    lemmaMap = Lemmatizer.normalizeText(element.text());
-//                    Set<String> matchedLemma = lemmaMap.keySet();
-//                    matchedLemma.retainAll(lemmaSearchLine.keySet());
-//                    if (!matchedLemma.isEmpty()) {
-////                        for (String l : matchedLemma) {
-////                            System.out.println(l);
-////                        }
-//
-//                        snippet = element;
-//                        //snippet.text(element.text().replaceAll("Возникла","<b>Возник</b>"));
-//                        System.out.println(searchResult.getPage().getPath() + " - " + matchedLemma.toString());
-//                    }
-//                }
-//            }
-            System.out.println(searchResult.getPage().getPath() + "; " + document.select("title").text() + "; Сниппет: " + snippet.text() + "; rel - " + searchResult.getRelativeRelevance());
+            for (Field field : fields) {
+                Elements elements = document.select(field.getName());
+                for (Element element : elements) {
+                    snippetText = element.text();
+                    lemmaMap = Lemmatizer.normalizeText(element.text());
+                    Set<String> matchedLemma = lemmaMap.keySet();
+                    matchedLemma.retainAll(lemmaSearchLine.keySet());
+                    if (!matchedLemma.isEmpty()) {
+                        for (String l : matchedLemma) {
+                            //Не меняет т.к. регистр и лемма. Надо в StringBuilder перебрать текст по словам, сравнивая их с леммами. При совпадении выделяем жирным тегом, ставим "...", запускаем итерацию по следующей лемме
+                            snippetText = snippetText.replaceAll(l, "<b>" + l + "</b>");
+                        }
+
+                        snippet.html();
+                        snippet.appendText(snippetText);
+                        System.out.println(searchResult.getPage().getPath() + " - " + snippetText);
+                    }
+                }
+            }
+            System.out.println(searchResult.getPage().getPath() + "; " + document.select("title").text() + "; Сниппет: " + snippet.toString() + "; rel - " + searchResult.getRelativeRelevance());
         }
 
         sessionFactory.close();
 
         return lemmaList.toString();
     }
+
+
 }
