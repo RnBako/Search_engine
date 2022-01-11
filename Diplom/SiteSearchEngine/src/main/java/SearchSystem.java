@@ -1,5 +1,3 @@
-import jdk.jshell.Snippet;
-import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
@@ -8,10 +6,11 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
-import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class SearchSystem {
@@ -48,33 +47,19 @@ public class SearchSystem {
 
         List<Field> fields = session.createQuery("from Field f").list();
         Document document = new Document("");
-        HashMap<String, Integer> lemmaMap;
-        String snippetText = "";
 
         for (SearchResult searchResult : searchResults) {
             searchResult.setRelativeRelevance(searchResult.getAbsoluteRelevance() / maxRelevance);
-            Element snippet = new Element("p");
             document = Jsoup.parse(searchResult.getPage().getContent());
+            Element snippet = new Element("description");
             for (Field field : fields) {
-                Elements elements = document.select(field.getName());
-                for (Element element : elements) {
-                    snippetText = element.text();
-                    lemmaMap = Lemmatizer.normalizeText(element.text());
-                    Set<String> matchedLemma = lemmaMap.keySet();
-                    matchedLemma.retainAll(lemmaSearchLine.keySet());
-                    if (!matchedLemma.isEmpty()) {
-                        for (String l : matchedLemma) {
-                            //Не меняет т.к. регистр и лемма. Надо в StringBuilder перебрать текст по словам, сравнивая их с леммами. При совпадении выделяем жирным тегом, ставим "...", запускаем итерацию по следующей лемме
-                            snippetText = snippetText.replaceAll(l, "<b>" + l + "</b>");
-                        }
-
-                        snippet.html();
-                        snippet.appendText(snippetText);
-                        System.out.println(searchResult.getPage().getPath() + " - " + snippetText);
-                    }
-                }
+                Element element = document.select(field.getName()).first();
+                long start = System.currentTimeMillis();
+                snippet = generateSnippet(element, lemmaSearchLine, snippet);
+                long genTime = (System.currentTimeMillis() - start) / 1000;
+                System.out.println(field.getName() + " - Сгенерерировали " + snippet.toString() + " за " + genTime);
             }
-            System.out.println(searchResult.getPage().getPath() + "; " + document.select("title").text() + "; Сниппет: " + snippet.toString() + "; rel - " + searchResult.getRelativeRelevance());
+            System.out.println(searchResult.getPage().getPath() + "; " + document.select("title").text() + "; Сниппет: " + snippet + "; rel - " + searchResult.getRelativeRelevance());
         }
 
         sessionFactory.close();
@@ -82,5 +67,68 @@ public class SearchSystem {
         return lemmaList.toString();
     }
 
+    private static Element generateSnippet(Element elementForGenerate, HashMap<String, Integer> lemmaSearchLine, Element snippet) throws IOException {
+        HashMap<String, Integer> lemmaMap;
+        String snippetText = "";
+
+        //Перебор текста по словам (пока просто перебор, потом можно добавить какой-то из алгоритмов поиска подстроки).
+        // Здесь проблема та же - каждому слову надо вызвать лемматайзер, на что и уходит основное время и ресурсы
+        String elementText = elementForGenerate.text();
+        String regex = "[A-ё’]+[\\s]";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(elementText);
+        int i = 0;
+        for (String searchWord : lemmaSearchLine.keySet()) {
+            while (matcher.find()) {
+                i++;
+                int start = matcher.start();
+                int end = matcher.end();
+                String word = elementText.substring(start, end).trim();
+//                lemmaMap = Lemmatizer.normalizeText(word);
+//                if (!lemmaMap.isEmpty() && searchWord.equals(lemmaMap.keySet().stream().findFirst().get())) {
+//                    System.out.println(word);
+//                }
+            }
+        }
+        System.out.println("Количество слов - " + i);
+        return snippet;
+        //Перебор элементов рекурсивно работает медленно, т.к. на каждом вызывается лемматайзер.
+//        if (elementForGenerate == null || !elementForGenerate.hasText()) {
+//            return snippet;
+//        } else if (elementForGenerate.childrenSize() == 0) {
+//            snippetText = elementForGenerate.text() + " ";
+//            if (!snippetText.trim().isEmpty()) {
+//                lemmaMap = Lemmatizer.normalizeText(snippetText);
+//                Set<String> matchedLemma = lemmaMap.keySet();
+//                matchedLemma.retainAll(lemmaSearchLine.keySet());
+//                if (!matchedLemma.isEmpty()) {
+//                    for (String l : matchedLemma) {
+//                        String regex = "[A-ё’]+[\\s]";
+//                        Pattern pattern = Pattern.compile(regex);
+//                        Matcher matcher = pattern.matcher(snippetText);
+//                        while (matcher.find()) {
+//                            int start = matcher.start();
+//                            int end = matcher.end();
+//                            String word = snippetText.substring(start, end).trim();
+//                            Set<String> wordSet = Lemmatizer.normalizeText(word).keySet();
+//                            if (!wordSet.isEmpty() && l.equals(wordSet.stream().findFirst().get())) {
+//                                snippet.appendElement("b").appendText(word + " ");
+//                            } else {
+//                                snippet.appendText(word + " ");
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            return snippet;
+//        } else {
+//            for (Element child : elementForGenerate.children()) {
+//                if (child != null) {
+//                    snippet = generateSnippet(child, lemmaSearchLine, snippet);
+//                }
+//            }
+//            return snippet;
+//        }
+    }
 
 }
