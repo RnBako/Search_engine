@@ -56,10 +56,7 @@ public class SearchSystem {
             Element snippet = new Element("description");
             for (Field field : fields) {
                 Element element = document.select(field.getName()).first();
-                long start = System.currentTimeMillis();
                 snippet = generateSnippet(element, lemmaSearchLine, snippet);
-                long genTime = (System.currentTimeMillis() - start) / 1000;
-                System.out.println(field.getName() + " - Сгенерерировали " + snippet.toString() + " за " + genTime);
             }
             System.out.println(searchResult.getPage().getPath() + "; " + document.select("title").text() + "; Сниппет: " + snippet + "; rel - " + searchResult.getRelativeRelevance());
         }
@@ -70,12 +67,10 @@ public class SearchSystem {
     }
 
     private static Element generateSnippet(Element elementForGenerate, HashMap<String, Integer> lemmaSearchLine, Element snippet) throws IOException {
-        HashMap<String, Integer> lemmaMap;
         HashMap<String, Collection<Integer>> textMap = new HashMap<>();
 
         LuceneMorphology luceneMorphology = new RussianLuceneMorphology();
         List<String> wordBaseForms;
-        String snippetText = "";
 
         String elementText = elementForGenerate.text();
         String regex = "[А-ё’]+[\\s]";
@@ -106,7 +101,6 @@ public class SearchSystem {
             }
         }
 
-        System.out.println("Количество слов - " + textMap.size());
         for (String searchWord : lemmaSearchLine.keySet()) {
             if (textMap.get(searchWord) != null) {
                 int index = textMap.get(searchWord).stream().findFirst().get();
