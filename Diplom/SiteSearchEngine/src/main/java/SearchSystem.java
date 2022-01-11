@@ -1,3 +1,5 @@
+import org.apache.lucene.morphology.LuceneMorphology;
+import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
@@ -69,28 +71,62 @@ public class SearchSystem {
 
     private static Element generateSnippet(Element elementForGenerate, HashMap<String, Integer> lemmaSearchLine, Element snippet) throws IOException {
         HashMap<String, Integer> lemmaMap;
+        HashMap<String, Collection<Integer>> textMap = new HashMap<>();
+
+        LuceneMorphology luceneMorphology = new RussianLuceneMorphology();
+        List<String> wordBaseForms;
         String snippetText = "";
 
-        //Перебор текста по словам (пока просто перебор, потом можно добавить какой-то из алгоритмов поиска подстроки).
-        // Здесь проблема та же - каждому слову надо вызвать лемматайзер, на что и уходит основное время и ресурсы
         String elementText = elementForGenerate.text();
-        String regex = "[A-ё’]+[\\s]";
+        String regex = "[А-ё’]+[\\s]";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(elementText);
-        int i = 0;
-        for (String searchWord : lemmaSearchLine.keySet()) {
-            while (matcher.find()) {
-                i++;
-                int start = matcher.start();
-                int end = matcher.end();
-                String word = elementText.substring(start, end).trim();
-//                lemmaMap = Lemmatizer.normalizeText(word);
-//                if (!lemmaMap.isEmpty() && searchWord.equals(lemmaMap.keySet().stream().findFirst().get())) {
-//                    System.out.println(word);
-//                }
+        while (matcher.find()) {
+            int start = matcher.start();
+            int end = matcher.end();
+            String word = elementText.substring(start, end).trim().toLowerCase(Locale.ROOT);
+            wordBaseForms = luceneMorphology.getMorphInfo(word);
+            boolean isAncillaryPart = false;
+            for (String wbf : wordBaseForms) {
+                String morphInfo = wbf.substring(wbf.lastIndexOf(" ") + 1);
+                if (morphInfo.equals("ЧАСТ") || morphInfo.equals("СОЮЗ") || morphInfo.equals("ПРЕДЛ") || morphInfo.equals("МЕЖД")) {
+                    isAncillaryPart = true;
+                    break;
+                }
+                word = wbf.substring(0, wbf.indexOf('|'));
+            }
+            if (!isAncillaryPart) {
+                if (textMap.get(word) == null) {
+                    Collection <Integer> wordIndex = new ArrayList<>();
+                    wordIndex.add(start);
+                    textMap.put(word, wordIndex);
+                } else {
+                    textMap.get(word).add(start);
+                }
             }
         }
-        System.out.println("Количество слов - " + i);
+
+        System.out.println("Количество слов - " + textMap.size());
+        for (String searchWord : lemmaSearchLine.keySet()) {
+            if (textMap.get(searchWord) != null) {
+                int index = textMap.get(searchWord).stream().findFirst().get();
+                String temp = elementForGenerate.text().substring(0, index);
+                for (int i = 0; i < 6; i++) {
+                    temp = temp.substring(0, temp.lastIndexOf(" "));
+                }
+                String previousText = elementForGenerate.text().substring(temp.length(), index);
+                temp = elementForGenerate.text().substring(index);
+                for (int i = 0; i < 6; i++) {
+                    temp = temp.substring(temp.indexOf(" ")).trim();
+                }
+                String subsequentText = elementForGenerate.text().substring(index, elementForGenerate.text().length() - temp.length());
+                String boldWord = subsequentText.substring(0, subsequentText.indexOf(" "));
+                subsequentText = subsequentText.substring(subsequentText.indexOf(" "));
+                snippet.appendElement("p").appendText(previousText);
+                snippet.appendElement("b").appendText(boldWord);
+                snippet.appendElement("p").appendText(subsequentText);
+            }
+        }
         return snippet;
         //Перебор элементов рекурсивно работает медленно, т.к. на каждом вызывается лемматайзер.
 //        if (elementForGenerate == null || !elementForGenerate.hasText()) {
