@@ -31,7 +31,7 @@ public class SearchSystem {
 
         System.out.println("Подключение - " + ((System.currentTimeMillis() - start) / 1000));
         start = System.currentTimeMillis();
-        List<Lemma> lemmas = session.createQuery("from Lemma l where l.frequency <= 250 and l.lemma in (" + lemmaList.toString() + ") order by l.frequency").list();
+        List<Lemma> lemmas = session.createQuery("from Lemma l where l.frequency <= 250 and l.lemma in (" + lemmaList + ") order by l.frequency").list();
         StringBuilder lemmaIdList = new StringBuilder();
         for (Lemma lemma : lemmas) {
             lemmaIdList.append((lemmaIdList.length() > 0) ? "," : "").append(lemma.getId());
@@ -56,7 +56,7 @@ public class SearchSystem {
         }
 
         List<Field> fields = session.createQuery("from Field f").list();
-        Document document = new Document("");
+        Document document;
 
         for (SearchResult searchResult : searchResults) {
             searchResult.setRelativeRelevance(searchResult.getAbsoluteRelevance() / maxRelevance);
@@ -66,8 +66,11 @@ public class SearchSystem {
                 Element element = document.select(field.getName()).first();
                 if (element != null) generateSnippet(element, lemmaSearchLine, snippet);
             }
-            System.out.println(searchResult.getPage().getPath() + "; " + document.select("title").text() + "; Сниппет: " + snippet + "; rel - " + searchResult.getRelativeRelevance());
+            searchResult.setTitle(document.select("title").text());
+            searchResult.setSnippet(snippet);
+            //System.out.println(searchResult.getPage().getPath() + "; " +searchResult.getTitle() + "; Сниппет: " + searchResult.getSnippet() + "; rel - " + searchResult.getRelativeRelevance());
         }
+        searchResults.sort(Collections.reverseOrder(SearchResult.COMPARE_BY_RELATIVE_RELEVANCE));
         System.out.println("Сборка результатов - " + ((System.currentTimeMillis() - start) / 1000) + " с.");
 
         sessionFactory.close();
@@ -142,43 +145,6 @@ public class SearchSystem {
                 }
             }
         }
-        //Перебор элементов рекурсивно работает медленно, т.к. на каждом вызывается лемматайзер.
-//        if (elementForGenerate == null || !elementForGenerate.hasText()) {
-//            return snippet;
-//        } else if (elementForGenerate.childrenSize() == 0) {
-//            snippetText = elementForGenerate.text() + " ";
-//            if (!snippetText.trim().isEmpty()) {
-//                lemmaMap = Lemmatizer.normalizeText(snippetText);
-//                Set<String> matchedLemma = lemmaMap.keySet();
-//                matchedLemma.retainAll(lemmaSearchLine.keySet());
-//                if (!matchedLemma.isEmpty()) {
-//                    for (String l : matchedLemma) {
-//                        String regex = "[A-ё’]+[\\s]";
-//                        Pattern pattern = Pattern.compile(regex);
-//                        Matcher matcher = pattern.matcher(snippetText);
-//                        while (matcher.find()) {
-//                            int start = matcher.start();
-//                            int end = matcher.end();
-//                            String word = snippetText.substring(start, end).trim();
-//                            Set<String> wordSet = Lemmatizer.normalizeText(word).keySet();
-//                            if (!wordSet.isEmpty() && l.equals(wordSet.stream().findFirst().get())) {
-//                                snippet.appendElement("b").appendText(word + " ");
-//                            } else {
-//                                snippet.appendText(word + " ");
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            return snippet;
-//        } else {
-//            for (Element child : elementForGenerate.children()) {
-//                if (child != null) {
-//                    snippet = generateSnippet(child, lemmaSearchLine, snippet);
-//                }
-//            }
-//            return snippet;
-//        }
     }
 
 }

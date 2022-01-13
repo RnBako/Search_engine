@@ -22,10 +22,6 @@ public class Lemma {
         return id;
     }
 
-    public String getLemma() {
-        return lemma;
-    }
-
     public int getFrequency() {
         return frequency;
     }

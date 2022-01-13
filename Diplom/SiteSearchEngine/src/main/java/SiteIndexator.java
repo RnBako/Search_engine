@@ -115,36 +115,6 @@ public class SiteIndexator extends RecursiveTask<Page> {
             session.beginTransaction();
             session.clear();
             int bulkSize = 0;
-//            for (Page n : siteList.values()) {
-//                if (bulkSize == 250) {
-//                    session.getTransaction().commit();
-//                    session.beginTransaction();
-//                    session.clear();
-//                    bulkSize = 0;
-//                }
-//                session.save(n);
-//                bulkSize++;
-//            }
-//            session.getTransaction().commit();
-//
-//            session.beginTransaction();
-//            session.clear();
-//            bulkSize = 0;
-//            for (Lemma l : lemmaList.values()) {
-//                if (bulkSize == 250) {
-//                    session.getTransaction().commit();
-//                    session.beginTransaction();
-//                    session.clear();
-//                    bulkSize = 0;
-//                }
-//                session.save(l);
-//                bulkSize++;
-//            }
-//            session.getTransaction().commit();
-//
-//            session.beginTransaction();
-//            session.clear();
-//            bulkSize = 0;
             for (Index i : indexList.values()){
                 if (bulkSize == 250) {
                     session.getTransaction().commit();

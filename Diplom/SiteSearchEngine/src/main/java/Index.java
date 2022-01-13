@@ -32,8 +32,4 @@ public class Index {
     public Page getPage() {
         return page;
     }
-
-    public Lemma getLemma() {
-        return lemma;
-    }
 }
