@@ -84,8 +84,8 @@ public class SiteIndexator extends RecursiveTask<Page> {
                         element.attr("href").charAt(0) == '/' &&
                         !element.attr("href").contains(".jpg") &&
                         !element.attr("href").contains(".pdf")) {
-
-                    String address = root + page.getPath();
+                    String path = element.attr("href");
+                    String address = root + path;
 
                     URL url = new URL(address);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -95,7 +95,7 @@ public class SiteIndexator extends RecursiveTask<Page> {
                             .userAgent("Mozilla/5.0 (compatible; BakoBot/1.0;)")
                             .referrer("http://www.google.com")
                             .maxBodySize(0).get();
-                    SiteIndexator task = new SiteIndexator(element.attr("href"), code, childDocument.toString());
+                    SiteIndexator task = new SiteIndexator(path, code, childDocument.toString());
                     task.fork();
                     taskList.add(task);
                 }
@@ -115,36 +115,36 @@ public class SiteIndexator extends RecursiveTask<Page> {
             session.beginTransaction();
             session.clear();
             int bulkSize = 0;
-            for (Page n : siteList.values()) {
-                if (bulkSize == 250) {
-                    session.getTransaction().commit();
-                    session.beginTransaction();
-                    session.clear();
-                    bulkSize = 0;
-                }
-                session.save(n);
-                bulkSize++;
-            }
-            session.getTransaction().commit();
-
-            session.beginTransaction();
-            session.clear();
-            bulkSize = 0;
-            for (Lemma l : lemmaList.values()) {
-                if (bulkSize == 250) {
-                    session.getTransaction().commit();
-                    session.beginTransaction();
-                    session.clear();
-                    bulkSize = 0;
-                }
-                session.save(l);
-                bulkSize++;
-            }
-            session.getTransaction().commit();
-//Проверить сохранение тела контента
-            session.beginTransaction();
-            session.clear();
-            bulkSize = 0;
+//            for (Page n : siteList.values()) {
+//                if (bulkSize == 250) {
+//                    session.getTransaction().commit();
+//                    session.beginTransaction();
+//                    session.clear();
+//                    bulkSize = 0;
+//                }
+//                session.save(n);
+//                bulkSize++;
+//            }
+//            session.getTransaction().commit();
+//
+//            session.beginTransaction();
+//            session.clear();
+//            bulkSize = 0;
+//            for (Lemma l : lemmaList.values()) {
+//                if (bulkSize == 250) {
+//                    session.getTransaction().commit();
+//                    session.beginTransaction();
+//                    session.clear();
+//                    bulkSize = 0;
+//                }
+//                session.save(l);
+//                bulkSize++;
+//            }
+//            session.getTransaction().commit();
+//
+//            session.beginTransaction();
+//            session.clear();
+//            bulkSize = 0;
             for (Index i : indexList.values()){
                 if (bulkSize == 250) {
                     session.getTransaction().commit();
