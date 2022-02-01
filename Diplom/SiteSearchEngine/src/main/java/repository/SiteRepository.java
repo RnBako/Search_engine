@@ -1,0 +1,12 @@
+package repository;
+
+import model.Site;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface SiteRepository extends CrudRepository<Site, Integer> {
+    public List<Site> findAll();
+}

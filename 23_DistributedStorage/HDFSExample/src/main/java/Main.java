@@ -18,9 +18,9 @@ public class Main
         System.setProperty("HADOOP_USER_NAME", "root");
 
         FileSystem hdfs = FileSystem.get(
-            new URI("hdfs://5d16f9be6555:8020"), configuration
+            new URI("hdfs://9a2dc6e44d25:8020"), configuration
         );
-        Path file = new Path("hdfs://5d16f9be6555:8020/test/file.txt");
+        Path file = new Path("hdfs://9a2dc6e44d25:8020/test/file.txt");
 
         if (hdfs.exists(file)) {
             hdfs.delete(file, true);
@@ -31,7 +31,7 @@ public class Main
             new OutputStreamWriter(os, "UTF-8")
         );
         System.out.println("Стример создали");
-        for(int i = 0; i < 10_000_000; i++) {
+        for(int i = 0; i < 100_000; i++) {
             br.write(getRandomWord() + " ");
         }
         System.out.println("Нагенерили");

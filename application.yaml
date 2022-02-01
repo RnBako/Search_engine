@@ -1,0 +1,31 @@
+spring.datasource.url: jdbc:mysql://localhost:3306/search_engine?useUnicode=true&characterEncoding=utf8
+spring.datasource.username: root
+spring.datasource.password: mtesttest
+spring.jpa.hibernate.ddl-auto: update
+
+indexing:
+  sites:
+    - url: https://www.playback.ru
+      name: playback.ru
+    - url: https://www.skillbox.ru
+      name: Skillbox
+    - url: https://volochek.life
+      name: volochek
+    - url: https://ipfran.ru
+      name: ipfran
+    - url: https://dimonvideo.ru
+      name: demonvideo
+    - url: https://nikoartgallery.com
+      name: artgallery
+    - url: https://et-cetera.ru/mobile
+      name: et=cetera
+    - url: https://www.lutherancathedral.ru
+      name: lutherans
+    - url: https://dombulgakova.ru
+      name: bulgakov
+    - url: https://www.svetlovka.ru
+      name: svetlovka
+
+user-agent: Mozilla/5.0 (compatible; BakoBot/1.0;)
+
+path.to.interface: /admin
