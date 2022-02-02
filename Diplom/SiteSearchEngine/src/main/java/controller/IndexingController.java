@@ -43,16 +43,8 @@ public class IndexingController {
 
     @GetMapping("/startIndexing")
     public JSONObject startIndexing() {
-        List<SiteFromProperties> sitesFromProperties = siteService.getSites();
-        Iterable<Site> siteIterable = siteRepository.findAll();
         HashMap<String, Site> sitesFromDB = new HashMap<>();
-        siteIterable.forEach(site -> sitesFromDB.put(site.getUrl(), site));
-        for (SiteFromProperties siteFromProperties : sitesFromProperties) {
-            if (sitesFromDB.get(siteFromProperties.getUrl()) == null) {
-                Site site = new Site(Status.FAILED, new Date(), "", siteFromProperties.getUrl(), siteFromProperties.getName());
-                sitesFromDB.put(siteFromProperties.getUrl(), siteRepository.save(site));
-            }
-        }
+        syncSitePropertiesAndDB(sitesFromDB);
 
         boolean isIndexing = false;
         for (Site site : sitesFromDB.values()) {
@@ -66,12 +58,9 @@ public class IndexingController {
         if (isIndexing) {
             response.put("result", false);
             response.put("error", "Индексация уже запущена");
-            return response;
         } else {
             System.out.println("Begin - " + sitesFromDB.size());
-            Iterable<Field> fieldIterable = fieldRepository.findAll();
-            List<Field> fields = new ArrayList<>();
-            fieldIterable.forEach(fields::add);
+            List<Field> fields = getFields();
 
             Callable<Page>[] tasks = new Callable[sitesFromDB.values().size()];
             int j = 0;
@@ -86,10 +75,7 @@ public class IndexingController {
                         pageRepository.deleteAll(pageIterable);
                         lemmaRepository.deleteAll(lemmaIterable);
 
-                        site.setStatus(Status.INDEXING);
-                        site.setStatusTime(new Date());
-                        site.setLastError("");
-                        siteRepository.save(site);
+                        setSiteStatus(site, Status.INDEXING, "");
 
                         Page firstPage = new Page("/", 200, Jsoup.connect(site.getUrl())
                                 .userAgent(userAgent)
@@ -98,18 +84,12 @@ public class IndexingController {
                                 site);
                         Page root = new SiteIndexator(site, userAgent, fields, indexRepository, lemmaRepository, pageRepository).toIndex(firstPage);
 
-                        site.setStatus(Status.INDEXED);
-                        site.setStatusTime(new Date());
-                        site.setLastError("");
-                        siteRepository.save(site);
+                        setSiteStatus(site, Status.INDEXED, "");
                         System.out.println("Завершили - " + site.getUrl());
                         return root;
                     } catch (Exception ex) {
+                        setSiteStatus(site, Status.FAILED, ex.getMessage());
                         System.out.println("Отвалились - " + ex.getMessage());
-                        site.setStatus(Status.FAILED);
-                        site.setStatusTime(new Date());
-                        site.setLastError(ex.getMessage());
-                        siteRepository.save(site);
                         return new Page("/", 200, Jsoup.connect(site.getUrl())
                                 .userAgent(userAgent)
                                 .referrer("http://www.google.com")
@@ -124,8 +104,8 @@ public class IndexingController {
             for (Callable<Page> task : tasks) executorService.submit(task);
             executorService.shutdown();
             response.put("result", true);
-            return response;
         }
+        return response;
     }
 
     @GetMapping("/stopIndexing")
@@ -139,8 +119,7 @@ public class IndexingController {
         for (Site site : sitesFromDB.values()) {
             if (site.getStatus() == Status.INDEXING) {
                 isIndexing = true;
-                site.setStatus(Status.INDEXED);
-                siteRepository.save(site);
+                setSiteStatus(site, Status.INDEXED, "");
             }
         }
 
@@ -156,10 +135,8 @@ public class IndexingController {
 
     @PostMapping("/indexPage")
     public JSONObject indexPage(String url) {
-        List<SiteFromProperties> sitesFromProperties = siteService.getSites();
-        Iterable<Site> siteIterable = siteRepository.findAll();
         HashMap<String, Site> sitesFromDB = new HashMap<>();
-        siteIterable.forEach(site -> sitesFromDB.put(site.getUrl(), site));
+        syncSitePropertiesAndDB(sitesFromDB);
 
         String rootOfURL = "";
         String pathOfURL = "";
@@ -170,17 +147,12 @@ public class IndexingController {
             rootOfURL = url.substring(matcher.start(), matcher.end()-1).trim();
             pathOfURL = url.substring(rootOfURL.length());
         }
-
         boolean isURLinProperties = false;
         Site siteForIndexing = null;
-        for (SiteFromProperties siteFromProperties : sitesFromProperties) {
-            if (sitesFromDB.get(siteFromProperties.getUrl()) == null) {
-                Site site = new Site(Status.FAILED, new Date(), "", siteFromProperties.getUrl(), siteFromProperties.getName());
-                sitesFromDB.put(siteFromProperties.getUrl(), siteRepository.save(site));
-            }
-            if (!rootOfURL.isEmpty() && siteFromProperties.getUrl().contains(rootOfURL)) {
+        for (Site site : sitesFromDB.values()) {
+            if (!rootOfURL.isEmpty() && site.getUrl().contains(rootOfURL)) {
                 isURLinProperties = true;
-                siteForIndexing = sitesFromDB.get(siteFromProperties.getUrl());
+                siteForIndexing = sitesFromDB.get(site.getUrl());
             }
         }
 
@@ -189,9 +161,7 @@ public class IndexingController {
             System.out.println("Site - " + siteForIndexing.getName());
             System.out.println("Path - " + pathOfURL);
 
-            Iterable<Field> fieldIterable = fieldRepository.findAll();
-            List<Field> fields = new ArrayList<>();
-            fieldIterable.forEach(fields::add);
+            List<Field> fields = getFields();
 
             Iterable<Page> pageIterable = pageRepository.findBySiteIdAndPath(siteForIndexing.getId(), url.substring(rootOfURL.length()));
             Iterable<Index> indexIterable = indexRepository.findByPageIn(pageIterable);
@@ -202,10 +172,7 @@ public class IndexingController {
             pageRepository.deleteAll(pageIterable);
             lemmaRepository.deleteAll(lemmaIterable);
 
-            siteForIndexing.setStatus(Status.INDEXING);
-            siteForIndexing.setStatusTime(new Date());
-            siteForIndexing.setLastError("");
-            siteRepository.save(siteForIndexing);
+            setSiteStatus(siteForIndexing, Status.INDEXING, "");
 
             try {
                 Page firstPage = new Page(pathOfURL, 200, Jsoup.connect(siteForIndexing.getUrl())
@@ -215,25 +182,45 @@ public class IndexingController {
                         siteForIndexing);
 
                 Page root = new SiteIndexator(siteForIndexing, userAgent, fields, indexRepository, lemmaRepository, pageRepository).toIndex(firstPage);
-                siteForIndexing.setStatus(Status.INDEXED);
-                siteForIndexing.setStatusTime(new Date());
-                siteForIndexing.setLastError("");
-                siteRepository.save(siteForIndexing);
+
+                setSiteStatus(siteForIndexing, Status.INDEXED, "");
                 System.out.println("Завершили - " + siteForIndexing.getUrl());
             } catch (Exception ex) {
                 System.out.println("Отвалились - " + ex.getMessage());
-                siteForIndexing.setStatus(Status.FAILED);
-                siteForIndexing.setStatusTime(new Date());
-                siteForIndexing.setLastError(ex.getMessage());
-                siteRepository.save(siteForIndexing);
+                setSiteStatus(siteForIndexing, Status.FAILED, ex.getMessage());
             }
 
             response.put("result", true);
-            return response;
         } else {
             response.put("result", false);
             response.put("error", "Данная страница находится за пределами сайтов, указанных в конфигурационном файле");
-            return response;
         }
+        return response;
+    }
+
+    private void syncSitePropertiesAndDB(HashMap<String, Site> sitesFromDB) {
+        List<SiteFromProperties> sitesFromProperties = siteService.getSites();
+        Iterable<Site> siteIterable = siteRepository.findAll();
+        siteIterable.forEach(site -> sitesFromDB.put(site.getUrl(), site));
+        for (SiteFromProperties siteFromProperties : sitesFromProperties) {
+            if (sitesFromDB.get(siteFromProperties.getUrl()) == null) {
+                Site site = new Site(Status.FAILED, new Date(), "", siteFromProperties.getUrl(), siteFromProperties.getName());
+                sitesFromDB.put(siteFromProperties.getUrl(), siteRepository.save(site));
+            }
+        }
+    }
+
+    private void setSiteStatus(Site site, Status status, String error) {
+        site.setStatus(status);
+        site.setStatusTime(new Date());
+        site.setLastError(error);
+        siteRepository.save(site);
+    }
+
+    private List<Field> getFields() {
+        Iterable<Field> fieldIterable = fieldRepository.findAll();
+        List<Field> fields = new ArrayList<>();
+        fieldIterable.forEach(fields::add);
+        return fields;
     }
 }

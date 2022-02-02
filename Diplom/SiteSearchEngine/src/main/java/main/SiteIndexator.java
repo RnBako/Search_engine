@@ -9,12 +9,10 @@ import repository.IndexRepository;
 import repository.LemmaRepository;
 import repository.PageRepository;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.RecursiveTask;
 
 public class SiteIndexator {
 
@@ -29,7 +27,7 @@ public class SiteIndexator {
     private final Map<String, Index> indexList = new ConcurrentHashMap<>();
 
 
-    public SiteIndexator (Site root, String userAgent, List<Field> fields, IndexRepository indexRepository, LemmaRepository lemmaRepository, PageRepository pageRepository) throws IOException {
+    public SiteIndexator (Site root, String userAgent, List<Field> fields, IndexRepository indexRepository, LemmaRepository lemmaRepository, PageRepository pageRepository) throws Exception {
         this.root = root;
         SiteIndexator.userAgent = userAgent;
         SiteIndexator.indexRepository = indexRepository;
