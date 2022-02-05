@@ -3,7 +3,6 @@ package controller;
 import main.SiteIndexator;
 import model.*;
 import org.json.simple.JSONObject;
-import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,6 +39,7 @@ public class IndexingController {
     private String userAgent;
 
     private static ExecutorService executorService = null;
+    private static SiteIndexator[] tasks;
     private static Future[] futures;
 
     @GetMapping("/startIndexing")
@@ -63,58 +63,41 @@ public class IndexingController {
             System.out.println("Begin - " + sitesFromDB.size());
             List<Field> fields = getFields();
 
-            executorService = Executors.newWorkStealingPool();
-            Callable<Page>[] tasks = new Callable[sitesFromDB.values().size()];
+            executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+            tasks = new SiteIndexator[sitesFromDB.values().size()];
             futures = new Future[sitesFromDB.values().size()];
             int j = 0;
             for (Site site : sitesFromDB.values()) {
-                Callable<Page> task = () -> {
-                    System.out.println("Поток - " + Thread.currentThread().getName() + ", для - " + site.getUrl());
-                    try {
-                        Iterable<Page> pageIterable = pageRepository.findBySiteId(site.getId());
-                        Iterable<Index> indexIterable = indexRepository.findByPageIn(pageIterable);
-                        Iterable<Lemma> lemmaIterable = lemmaRepository.findBySiteId(site.getId());
-                        indexRepository.deleteAll(indexIterable);
-                        pageRepository.deleteAll(pageIterable);
-                        lemmaRepository.deleteAll(lemmaIterable);
+                try {
+                    Iterable<Page> pageIterable = pageRepository.findBySiteId(site.getId());
+                    Iterable<Index> indexIterable = indexRepository.findByPageIn(pageIterable);
+                    Iterable<Lemma> lemmaIterable = lemmaRepository.findBySiteId(site.getId());
+                    indexRepository.deleteAll(indexIterable);
+                    pageRepository.deleteAll(pageIterable);
+                    lemmaRepository.deleteAll(lemmaIterable);
 
-                        setSiteStatus(site, Status.INDEXING, "");
+                    SiteIndexator siteIndexator = new SiteIndexator(site, userAgent, fields, siteRepository, indexRepository, lemmaRepository, pageRepository);
 
-                        Page firstPage = new Page("/", 200, Jsoup.connect(site.getUrl())
-                                .userAgent(userAgent)
-                                .referrer("http://www.google.com")
-                                .maxBodySize(0).get().toString(),
-                                site);
-                        Page root = new SiteIndexator(site, userAgent, fields, indexRepository, lemmaRepository, pageRepository).toIndex(firstPage);
-
-                        setSiteStatus(site, Status.INDEXED, "");
-                        System.out.println("Завершили - " + site.getUrl());
-                        return root;
-                    } catch (Exception ex) {
-                        setSiteStatus(site, Status.FAILED, ex.getMessage());
-
-                        System.out.println("Отвалились - " + ex.getMessage());
-                        throw new RuntimeException(ex.getMessage());
-                    }
-                };
-
-                tasks[j] = task;
+                     tasks[j] = siteIndexator;
+                } catch (Exception ex) {
+                    setSiteStatus(site, Status.FAILED, ex.getMessage());
+                }
                 j++;
             }
 
             j = 0;
-            for (Callable<Page> task : tasks) {
+            for (SiteIndexator task : tasks) {
                 futures[j] = executorService.submit(task);
                 j++;
             }
-            executorService.shutdown();
+            executorService.shutdownNow();
             response.put("result", true);
         }
         return response;
     }
 
     @GetMapping("/stopIndexing")
-    public JSONObject stopIndexing() {
+    public JSONObject stopIndexing() throws ExecutionException, InterruptedException {
         JSONObject response = new JSONObject();
         Iterable<Site> siteIterable = siteRepository.findAll();
         HashMap<String, Site> sitesFromDB = new HashMap<>();
@@ -129,6 +112,7 @@ public class IndexingController {
         }
 
         if (isIndexing && executorService != null) {
+            for (SiteIndexator siteIndexator : tasks) siteIndexator.interrupt();
             for (Future future : futures) future.cancel(true);
             executorService.shutdownNow();
             response.put("result", true);
@@ -146,7 +130,7 @@ public class IndexingController {
 
         String rootOfURL = "";
         String pathOfURL = "";
-        String regex = "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]/";
+        String regex = "^(https?|ftp|file)://[-a-zA-Z0-9+&@#%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]/";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(url);
         if (matcher.find()) {
@@ -164,9 +148,6 @@ public class IndexingController {
 
         JSONObject response = new JSONObject();
         if (isURLinProperties) {
-            System.out.println("Site - " + siteForIndexing.getName());
-            System.out.println("Path - " + pathOfURL);
-
             List<Field> fields = getFields();
 
             Iterable<Page> pageIterable = pageRepository.findBySiteIdAndPath(siteForIndexing.getId(), url.substring(rootOfURL.length()));
@@ -178,23 +159,19 @@ public class IndexingController {
             pageRepository.deleteAll(pageIterable);
             lemmaRepository.deleteAll(lemmaIterable);
 
-            setSiteStatus(siteForIndexing, Status.INDEXING, "");
+            executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+            tasks = new SiteIndexator[1];
+            futures = new Future[1];
 
             try {
-                Page firstPage = new Page(pathOfURL, 200, Jsoup.connect(siteForIndexing.getUrl())
-                        .userAgent(userAgent)
-                        .referrer("http://www.google.com")
-                        .maxBodySize(0).get().toString(),
-                        siteForIndexing);
-
-                Page root = new SiteIndexator(siteForIndexing, userAgent, fields, indexRepository, lemmaRepository, pageRepository).toIndex(firstPage);
-
-                setSiteStatus(siteForIndexing, Status.INDEXED, "");
-                System.out.println("Завершили - " + siteForIndexing.getUrl());
+                SiteIndexator siteIndexator = new SiteIndexator(siteForIndexing, userAgent, fields, siteRepository, indexRepository, lemmaRepository, pageRepository);
+                tasks[0] = siteIndexator;
             } catch (Exception ex) {
-                System.out.println("Отвалились - " + ex.getMessage());
                 setSiteStatus(siteForIndexing, Status.FAILED, ex.getMessage());
             }
+
+            futures[0] = executorService.submit(tasks[0]);
+            executorService.shutdown();
 
             response.put("result", true);
         } else {

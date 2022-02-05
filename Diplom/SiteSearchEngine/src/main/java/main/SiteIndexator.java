@@ -8,16 +8,19 @@ import org.jsoup.select.Elements;
 import repository.IndexRepository;
 import repository.LemmaRepository;
 import repository.PageRepository;
+import repository.SiteRepository;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SiteIndexator {
+public class SiteIndexator implements Runnable{
 
+    private boolean isActive;
     private final Site root;
     private static String userAgent;
+    private static SiteRepository siteRepository;
     private static IndexRepository indexRepository;
     private static LemmaRepository lemmaRepository;
     private static PageRepository pageRepository;
@@ -27,20 +30,51 @@ public class SiteIndexator {
     private final Map<String, Index> indexList = new ConcurrentHashMap<>();
 
 
-    public SiteIndexator (Site root, String userAgent, List<Field> fields, IndexRepository indexRepository, LemmaRepository lemmaRepository, PageRepository pageRepository) throws Exception {
+    public SiteIndexator (Site root, String userAgent, List<Field> fields, SiteRepository siteRepository, IndexRepository indexRepository, LemmaRepository lemmaRepository, PageRepository pageRepository) throws Exception {
+        isActive = true;
         this.root = root;
         SiteIndexator.userAgent = userAgent;
+        SiteIndexator.siteRepository = siteRepository;
         SiteIndexator.indexRepository = indexRepository;
         SiteIndexator.lemmaRepository = lemmaRepository;
         SiteIndexator.pageRepository = pageRepository;
         SiteIndexator.fields = fields;
     }
 
+    @Override
+    public void run() {
+        while (isActive) {
+            try {
+                Page firstPage = new Page("/", 200, Jsoup.connect(root.getUrl())
+                    .userAgent(userAgent)
+                    .referrer("http://www.google.com")
+                    .maxBodySize(0).get().toString(),
+                    root);
+                setSiteStatus(root, Status.INDEXING, "");
+                Page page = toIndex(firstPage);
+                setSiteStatus(root, Status.INDEXED, "");
+            } catch (Exception ex) {
+                isActive = false;
+                setSiteStatus(root, Status.FAILED, ex.getMessage());
+            }
+        }
+    }
 
-    public synchronized Page toIndex(Page page) throws Exception{
+    public void interrupt() {
+        isActive = false;
+    }
+
+    private void setSiteStatus(Site site, Status status, String error) {
+        site.setStatus(status);
+        site.setStatusTime(new Date());
+        site.setLastError(error);
+        siteRepository.save(site);
+    }
+
+    private synchronized Page toIndex(Page page) throws Exception{
         System.out.println("Call for " + page.getPath() + " - started! PageList size - " + pageList.size() + ". root - " + root.getUrl());
 
-        if (pageList.get(page.getPath()) == null) {
+        if (pageList.get(page.getPath()) == null && isActive) {
             pageList.put(page.getPath(), page);
             page.setSite(root);
             pageRepository.save(page);
