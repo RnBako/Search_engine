@@ -39,7 +39,8 @@ public class IndexingController {
     @Value("${user-agent}")
     private String userAgent;
 
-    private static final ExecutorService executorService = Executors.newWorkStealingPool();
+    private static ExecutorService executorService = null;
+    private static Future[] futures;
 
     @GetMapping("/startIndexing")
     public JSONObject startIndexing() {
@@ -62,7 +63,9 @@ public class IndexingController {
             System.out.println("Begin - " + sitesFromDB.size());
             List<Field> fields = getFields();
 
+            executorService = Executors.newWorkStealingPool();
             Callable<Page>[] tasks = new Callable[sitesFromDB.values().size()];
+            futures = new Future[sitesFromDB.values().size()];
             int j = 0;
             for (Site site : sitesFromDB.values()) {
                 Callable<Page> task = () -> {
@@ -89,19 +92,21 @@ public class IndexingController {
                         return root;
                     } catch (Exception ex) {
                         setSiteStatus(site, Status.FAILED, ex.getMessage());
+
                         System.out.println("Отвалились - " + ex.getMessage());
-                        return new Page("/", 200, Jsoup.connect(site.getUrl())
-                                .userAgent(userAgent)
-                                .referrer("http://www.google.com")
-                                .maxBodySize(0).get().toString(),
-                                site);
+                        throw new RuntimeException(ex.getMessage());
                     }
                 };
+
                 tasks[j] = task;
                 j++;
             }
 
-            for (Callable<Page> task : tasks) executorService.submit(task);
+            j = 0;
+            for (Callable<Page> task : tasks) {
+                futures[j] = executorService.submit(task);
+                j++;
+            }
             executorService.shutdown();
             response.put("result", true);
         }
@@ -123,8 +128,9 @@ public class IndexingController {
             }
         }
 
-        if (isIndexing) {
-            executorService.shutdown();
+        if (isIndexing && executorService != null) {
+            for (Future future : futures) future.cancel(true);
+            executorService.shutdownNow();
             response.put("result", true);
         } else {
             response.put("result", false);

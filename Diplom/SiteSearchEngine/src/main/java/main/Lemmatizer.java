@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 public class Lemmatizer {
     public static HashMap<String, Integer> normalizeText (String inputText) throws IOException {
         String cleanText = inputText.replaceAll("[^А-ё]"," ").toLowerCase(Locale.ROOT) + " ";
-        String regex = "[А-ё’]+[\\s]";
+        String regex = "[А-ё]+[\\s]";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(cleanText);
         LuceneMorphology luceneMorphology = new RussianLuceneMorphology();
