@@ -8,8 +8,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface LemmaRepository extends CrudRepository<Lemma, Integer> {
+public interface LemmaRepository extends CrudRepository<Lemma, Integer>, CustomizedLemma<Lemma> {
     public List<Lemma> findAll();
 
     public List<Lemma> findBySiteId(Integer siteId);
+
 }

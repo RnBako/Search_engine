@@ -1,9 +1,6 @@
 package main;
 
-import model.Field;
-import model.Index;
-import model.Lemma;
-import model.Page;
+import model.*;
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
 import org.hibernate.Session;
@@ -14,6 +11,10 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
+import repository.FieldRepository;
+import repository.IndexRepository;
+import repository.LemmaRepository;
+import repository.SiteRepository;
 
 import java.io.IOException;
 import java.util.*;
@@ -22,36 +23,26 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class SearchSystem {
-    public static String searchPage(String searchLine) throws IOException {
-        long start = System.currentTimeMillis();
-        HashMap<String, Integer> lemmaSearchLine = Lemmatizer.normalizeText(searchLine);
+    public static List<SearchResult> searchPage(String query, String site, LemmaRepository lemmaRepository, SiteRepository siteRepository, IndexRepository indexRepository, FieldRepository fieldRepository) throws IOException {
+        HashMap<String, Integer> lemmaSearchLine = Lemmatizer.normalizeText(query);
         StringBuilder lemmaList = new StringBuilder();
         for (String lemma : lemmaSearchLine.keySet()) {
             lemmaList.append((lemmaList.length() > 0) ? ",'" : "'").append(lemma).append("'");
         }
 
-        StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure("hibernate.cfg.xml").build();
-        Metadata metadata = new MetadataSources(registry).getMetadataBuilder().build();
-        SessionFactory sessionFactory = metadata.getSessionFactoryBuilder().build();
-        Session session = sessionFactory.openSession();
+        List<Lemma> lemmas;
+        if (site == null) {
+            lemmas = lemmaRepository.findByFrequencyAndLemmaIn(250, lemmaList.toString());
+        } else {
+            List<Site> siteList = siteRepository.findByUrl(site);
+            lemmas = lemmaRepository.findBySiteAndFrequencyAndLemmaIn(siteList.get(0).getId(), 250, lemmaList.toString());
+        }
 
-        System.out.println("Подключение - " + ((System.currentTimeMillis() - start) / 1000));
-        start = System.currentTimeMillis();
-        List<Lemma> lemmas = session.createQuery("from model.Lemma l where l.frequency <= 250 and l.lemma in (" + lemmaList + ") order by l.frequency").list();
         StringBuilder lemmaIdList = new StringBuilder();
         for (Lemma lemma : lemmas) {
             lemmaIdList.append((lemmaIdList.length() > 0) ? "," : "").append(lemma.getId());
         }
-        System.out.println("Запрос лемм - " + (System.currentTimeMillis() - start) + " мс.");
-        start = System.currentTimeMillis();
-
-        List<Index> indexes = session.createSQLQuery("select i.* from `index` i where i.page_id in (select gi.page_id " +
-                                                        "from (select i.page_id, count(i.lemma_id) cnt from `index` i where i.lemma_id in (" + lemmaIdList + ") " +
-                                                        "group by i.page_id) gi where gi.cnt=" + lemmas.size() + ") " +
-                                                        "and i.lemma_id in (" + lemmaIdList + ")").addEntity(Index.class).list();
-
-        System.out.println("Запрос индексов - " + (System.currentTimeMillis() - start) + " мс.");
-        start = System.currentTimeMillis();
+        List<Index> indexes = indexRepository.findByLemmaAndLemmaSize(lemmaIdList.toString(), lemmas.size());
 
         List<SearchResult> searchResults = new ArrayList<>();
         Map<Page, List<Index>> groupedIndexes = indexes.stream().collect(Collectors.groupingBy(Index::getPage));
@@ -61,27 +52,25 @@ public class SearchSystem {
             searchResults.add(new SearchResult(item.getKey(), item.getValue().stream().mapToDouble(Index::getRank).sum(), 0));
         }
 
-        List<Field> fields = session.createQuery("from model.Field f").list();
+        Iterable<Field> fieldIterable = fieldRepository.findAll();
+        List<Field> fields = new ArrayList<>();
+        fieldIterable.forEach(fields::add);
         Document document;
 
         for (SearchResult searchResult : searchResults) {
             searchResult.setRelativeRelevance(searchResult.getAbsoluteRelevance() / maxRelevance);
             document = Jsoup.parse(searchResult.getPage().getContent());
-            Element snippet = new Element("description");
+            Element snippet = new Element("p");
             for (Field field : fields) {
                 Element element = document.select(field.getName()).first();
                 if (element != null) generateSnippet(element, lemmaSearchLine, snippet);
             }
             searchResult.setTitle(document.select("title").text());
             searchResult.setSnippet(snippet);
-            //System.out.println(searchResult.getPage().getPath() + "; " +searchResult.getTitle() + "; Сниппет: " + searchResult.getSnippet() + "; rel - " + searchResult.getRelativeRelevance());
         }
         searchResults.sort(Collections.reverseOrder(SearchResult.COMPARE_BY_RELATIVE_RELEVANCE));
-        System.out.println("Сборка результатов - " + ((System.currentTimeMillis() - start) / 1000) + " с.");
 
-        sessionFactory.close();
-
-        return lemmaList.toString();
+        return searchResults;
     }
 
     private static void generateSnippet(Element elementForGenerate, HashMap<String, Integer> lemmaSearchLine, Element snippet) throws IOException {
@@ -135,9 +124,9 @@ public class SearchSystem {
                     String subsequentText = elementForGenerate.text().substring(index, elementForGenerate.text().length() - temp.length());
                     String boldWord = subsequentText.substring(0, subsequentText.indexOf(" "));
                     subsequentText = subsequentText.substring(subsequentText.indexOf(" "));
-                    snippet.appendElement("p").appendText(previousText);
+                    snippet.appendText(previousText);
                     snippet.appendElement("b").appendText(boldWord);
-                    snippet.appendElement("p").appendText(subsequentText);
+                    snippet.appendText(subsequentText);
                 } else {
                     String temp = elementForGenerate.text();
                     for (int i = 0; i < 6; i++) {
@@ -147,7 +136,7 @@ public class SearchSystem {
                     String boldWord = subsequentText.substring(0, subsequentText.indexOf(" "));
                     subsequentText = subsequentText.substring(subsequentText.indexOf(" "));
                     snippet.appendElement("b").appendText(boldWord);
-                    snippet.appendElement("p").appendText(subsequentText);
+                    snippet.appendText(subsequentText);
                 }
             }
         }

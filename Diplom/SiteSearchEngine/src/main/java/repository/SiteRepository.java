@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface SiteRepository extends CrudRepository<Site, Integer> {
     public List<Site> findAll();
+
+    public List<Site> findByUrl(String url);
 }
