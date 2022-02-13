@@ -34,6 +34,11 @@ public class SearchController {
     public JSONObject search (String query, String site, Integer offset, Integer limit) {
         JSONObject response = new JSONObject();
         try {
+            if (query == null){
+                response.put("result", false);
+                response.put("error", "Задан пустой поисковый запрос");
+                return response;
+            }
             List<SearchResult> searchResults = SearchSystem.searchPage(query, site, lemmaRepository, siteRepository, indexRepository, fieldRepository);
 
             response.put("result", true);
@@ -54,7 +59,7 @@ public class SearchController {
         } catch (Exception ex) {
             ex.printStackTrace();
             response.put("result", false);
-            response.put("error", "Задан пустой поисковый запрос");
+            response.put("error", ex.getMessage());
         }
 
         return response;
