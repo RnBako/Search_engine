@@ -1,6 +1,5 @@
 package main;
 
-import junit.framework.TestCase;
 import model.Lemma;
 import model.Site;
 import model.Status;

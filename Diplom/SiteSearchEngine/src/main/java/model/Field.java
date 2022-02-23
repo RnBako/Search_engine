@@ -15,6 +15,14 @@ public class Field {
     @Column(name = "weight")
     private float weight;
 
+    public Field() { super(); }
+
+    public Field(String name, String selector, float weight) {
+        this.name = name;
+        this.selector = selector;
+        this.weight = weight;
+    }
+
     public String getName() {
         return name;
     }

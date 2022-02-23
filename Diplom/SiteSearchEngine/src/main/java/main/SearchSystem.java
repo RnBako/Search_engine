@@ -1,5 +1,6 @@
 package main;
 
+import main.Lemmatizer;
 import model.*;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.morphology.LuceneMorphology;

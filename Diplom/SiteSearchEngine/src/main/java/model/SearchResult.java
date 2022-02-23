@@ -1,6 +1,5 @@
-package main;
+package model;
 
-import model.Page;
 import org.jsoup.nodes.Element;
 
 import java.util.Comparator;

@@ -48,3 +48,7 @@ CREATE TABLE `index` (
   CONSTRAINT `FKiqgm34dkvjdt7kobg71xlbr33` FOREIGN KEY (`lemma_id`) REFERENCES `lemma` (`id`),
   CONSTRAINT `FKsq3363uoow6fmurlfheackwgc` FOREIGN KEY (`page_id`) REFERENCES `page` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=322216 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+INSERT INTO `field` (`name`, `selector`, `weight`) VALUES ('title', 'title', '1');
+
+INSERT INTO `field` (`name`, `selector`, `weight`) VALUES ('body', 'body', '0.8');

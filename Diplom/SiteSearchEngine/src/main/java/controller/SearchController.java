@@ -1,6 +1,6 @@
 package controller;
 
-import main.SearchResult;
+import model.SearchResult;
 import main.SearchSystem;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

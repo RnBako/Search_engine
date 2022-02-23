@@ -16,10 +16,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import repository.IndexRepository;
-import repository.LemmaRepository;
-import repository.PageRepository;
-import repository.SiteRepository;
+import repository.*;
 
 import static org.junit.Assert.*;
 
@@ -64,6 +61,9 @@ public class IndexRepositoryTest {
     @Autowired
     private SiteRepository siteRepository;
 
+    @Autowired
+    private static FieldRepository fieldRepository;
+
     @Test
     public void findByLemmaAndLemmaSizeTest() {
         Site site = new Site(Status.INDEXED, new Date(), "", "https://dimonvideo.ru", "dimonvideo");
@@ -79,5 +79,11 @@ public class IndexRepositoryTest {
 
         List<Index> indexList = indexRepository.findByLemmaAndLemmaSize(lemmas.toString(), 1);
         assertEquals(index, indexList.get(0));
+    }
+
+    @Test
+    public void searchPageTest() {
+        Site site = new Site(Status.INDEXED, new Date(), "", "https://dimonvideo.ru", "demonvideo");
+        siteRepository.save(site);
     }
 }
