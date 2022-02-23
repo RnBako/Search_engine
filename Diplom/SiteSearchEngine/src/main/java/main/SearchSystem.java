@@ -1,14 +1,9 @@
 package main;
 
 import model.*;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.boot.Metadata;
-import org.hibernate.boot.MetadataSources;
-import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import repository.FieldRepository;
@@ -23,19 +18,31 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class SearchSystem {
-    public static List<SearchResult> searchPage(String query, String site, LemmaRepository lemmaRepository, SiteRepository siteRepository, IndexRepository indexRepository, FieldRepository fieldRepository) throws IOException {
-        HashMap<String, Integer> lemmaSearchLine = Lemmatizer.normalizeText(query);
+    public static List<SearchResult> searchPage(String query, String site, LemmaRepository lemmaRepository, SiteRepository siteRepository, IndexRepository indexRepository, FieldRepository fieldRepository, Integer maxFrequency, Logger loggerInfo, boolean isLogging) throws IOException {
+        if (isLogging) {
+            loggerInfo.info("[searchPage] Begin.");
+        }
+
+        HashMap<String, Integer> lemmaSearchLine = Lemmatizer.normalizeText(query, loggerInfo, isLogging);
         StringBuilder lemmaList = new StringBuilder();
         for (String lemma : lemmaSearchLine.keySet()) {
             lemmaList.append((lemmaList.length() > 0) ? ",'" : "'").append(lemma).append("'");
         }
 
+        if (isLogging) {
+            loggerInfo.info("[searchPage] maxFrequency " + maxFrequency + ", lemmaList - " + lemmaList);
+        }
+
         List<Lemma> lemmas;
         if (site == null) {
-            lemmas = lemmaRepository.findByFrequencyAndLemmaIn(250, lemmaList.toString());
+            lemmas = lemmaRepository.findByFrequencyAndLemmaIn(maxFrequency, lemmaList.toString());
         } else {
             List<Site> siteList = siteRepository.findByUrl(site);
-            lemmas = lemmaRepository.findBySiteAndFrequencyAndLemmaIn(siteList.get(0).getId(), 250, lemmaList.toString());
+            lemmas = lemmaRepository.findBySiteAndFrequencyAndLemmaIn(siteList.get(0).getId(), maxFrequency, lemmaList.toString());
+        }
+
+        if (isLogging) {
+            loggerInfo.info("[searchPage] Lemmas count " + lemmas.size());
         }
 
         StringBuilder lemmaIdList = new StringBuilder();
@@ -44,12 +51,20 @@ public class SearchSystem {
         }
         List<Index> indexes = indexRepository.findByLemmaAndLemmaSize(lemmaIdList.toString(), lemmas.size());
 
+        if (isLogging) {
+            loggerInfo.info("[searchPage] Indexes count " + indexes.size());
+        }
+
         List<SearchResult> searchResults = new ArrayList<>();
         Map<Page, List<Index>> groupedIndexes = indexes.stream().collect(Collectors.groupingBy(Index::getPage));
         double maxRelevance = 0;
         for (Map.Entry<Page, List<Index>> item : groupedIndexes.entrySet()) {
             maxRelevance = Math.max(maxRelevance, item.getValue().stream().mapToDouble(Index::getRank).sum());
             searchResults.add(new SearchResult(item.getKey(), item.getValue().stream().mapToDouble(Index::getRank).sum(), 0));
+        }
+
+        if (isLogging) {
+            loggerInfo.info("[searchPage] Search results count" + searchResults.size());
         }
 
         Iterable<Field> fieldIterable = fieldRepository.findAll();
@@ -63,18 +78,26 @@ public class SearchSystem {
             Element snippet = new Element("p");
             for (Field field : fields) {
                 Element element = document.select(field.getName()).first();
-                if (element != null) generateSnippet(element, lemmaSearchLine, snippet);
+                if (element != null) generateSnippet(element, lemmaSearchLine, snippet, loggerInfo, isLogging);
             }
             searchResult.setTitle(document.select("title").text());
             searchResult.setSnippet(snippet);
         }
         searchResults.sort(Collections.reverseOrder(SearchResult.COMPARE_BY_RELATIVE_RELEVANCE));
 
+        if (isLogging) {
+            loggerInfo.info("[searchPage] Snippet added.");
+        }
+
         return searchResults;
     }
 
-    private static void generateSnippet(Element elementForGenerate, HashMap<String, Integer> lemmaSearchLine, Element snippet) throws IOException {
+    private static void generateSnippet(Element elementForGenerate, HashMap<String, Integer> lemmaSearchLine, Element snippet, Logger loggerInfo, boolean isLogging) throws IOException {
         HashMap<String, Collection<Integer>> textMap = new HashMap<>();
+
+        if (isLogging) {
+            loggerInfo.info("[generateSnippet] Snippet for element - " + elementForGenerate.toString());
+        }
 
         LuceneMorphology luceneMorphology = new RussianLuceneMorphology();
         List<String> wordBaseForms;
@@ -139,6 +162,10 @@ public class SearchSystem {
                     snippet.appendText(subsequentText);
                 }
             }
+        }
+
+        if (isLogging) {
+            loggerInfo.info("[generateSnippet] Snippet for element - " + elementForGenerate.toString() + " generated.");
         }
     }
 

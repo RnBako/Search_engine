@@ -8,7 +8,7 @@ import java.util.Collection;
 @Table(name = "`page`")
 public class Page {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     private int id;
     @Column(name = "path")
     private String path;

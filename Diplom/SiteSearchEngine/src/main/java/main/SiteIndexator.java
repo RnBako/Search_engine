@@ -1,6 +1,7 @@
 package main;
 
 import model.*;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -28,34 +29,43 @@ public class SiteIndexator implements Runnable{
     private final Map<String, Page> pageList = new ConcurrentHashMap<>();
     private final Map<String, Lemma> lemmaList = new ConcurrentHashMap<>();
     private final Map<String, Index> indexList = new ConcurrentHashMap<>();
+    private static String firstPagePath;
+    private static Logger loggerInfo;
+    private static Logger loggerException;
+    private static boolean isLogging;
 
 
-    public SiteIndexator (Site root, String userAgent, List<Field> fields, SiteRepository siteRepository, IndexRepository indexRepository, LemmaRepository lemmaRepository, PageRepository pageRepository) throws Exception {
+    public SiteIndexator (Site root, String firstPagePath, String userAgent, List<Field> fields, SiteRepository siteRepository, IndexRepository indexRepository, LemmaRepository lemmaRepository, PageRepository pageRepository, Logger loggerInfo, Logger loggerException, boolean isLogging) throws Exception {
         isActive = true;
         this.root = root;
+        SiteIndexator.firstPagePath = firstPagePath;
         SiteIndexator.userAgent = userAgent;
         SiteIndexator.siteRepository = siteRepository;
         SiteIndexator.indexRepository = indexRepository;
         SiteIndexator.lemmaRepository = lemmaRepository;
         SiteIndexator.pageRepository = pageRepository;
         SiteIndexator.fields = fields;
+        this.loggerInfo = loggerInfo;
+        this.loggerException = loggerException;
+        this.isLogging = isLogging;
     }
 
     @Override
     public void run() {
         while (isActive) {
             try {
-                Page firstPage = new Page("/", 200, Jsoup.connect(root.getUrl())
+                Page firstPage = new Page((firstPagePath == "") ? "/" : firstPagePath, 200, Jsoup.connect(root.getUrl())
                     .userAgent(userAgent)
                     .referrer("http://www.google.com")
                     .maxBodySize(0).get().toString(),
                     root);
                 setSiteStatus(root, Status.INDEXING, "");
-                Page page = toIndex(firstPage);
+                Page page = toIndex(firstPage, loggerInfo, isLogging);
                 setSiteStatus(root, Status.INDEXED, "");
             } catch (Exception ex) {
                 isActive = false;
                 setSiteStatus(root, Status.FAILED, ex.getMessage());
+                loggerException.debug(ex.getStackTrace());
             }
         }
     }
@@ -71,8 +81,10 @@ public class SiteIndexator implements Runnable{
         siteRepository.save(site);
     }
 
-    private synchronized Page toIndex(Page page) throws Exception{
-        System.out.println("Call for " + page.getPath() + " - started! PageList size - " + pageList.size() + ". root - " + root.getUrl());
+    private synchronized Page toIndex(Page page, Logger loggerInfo, boolean isLogging) throws Exception{
+        if (isLogging) {
+            loggerInfo.info("Call for " + page.getPath() + " - started! PageList size - " + pageList.size() + ". root - " + root.getUrl());
+        }
 
         if (pageList.get(page.getPath()) == null && isActive) {
             pageList.put(page.getPath(), page);
@@ -93,7 +105,7 @@ public class SiteIndexator implements Runnable{
         for (Field field : fields) {
             Elements elements = document.select(field.getName());
             for (Element element : elements) {
-                    lemmaMap = Lemmatizer.normalizeText(element.text());
+                    lemmaMap = Lemmatizer.normalizeText(element.text(), loggerInfo, isLogging);
                     for (String lemmaKey : lemmaMap.keySet()) {
                         if (lemmaList.get(lemmaKey) == null) {
                             Lemma lemma = new Lemma(lemmaKey, 1, root);
@@ -138,11 +150,13 @@ public class SiteIndexator implements Runnable{
                         .referrer("http://www.google.com")
                         .maxBodySize(0).get();
                 Page childPage = new Page(path, code, childDocument.toString(), root);
-                page.addChildren(toIndex(childPage));
+                page.addChildren(toIndex(childPage, loggerInfo, isLogging));
             }
         }
 
-        System.out.println("Call for page " + page.getPath() + ", root -" + root.getUrl() + " - finished!");
+        if (isLogging) {
+            loggerInfo.info("Call for page " + page.getPath() + ", root -" + root.getUrl() + " - finished!");
+        }
 
         return page;
     }

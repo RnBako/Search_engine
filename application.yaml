@@ -28,4 +28,8 @@ indexing:
 
 user-agent: Mozilla/5.0 (compatible; BakoBot/1.0;)
 
+logging-level: none
+
+max-frequency: 250
+
 path.to.interface: /admin

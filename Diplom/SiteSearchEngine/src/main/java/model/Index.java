@@ -6,7 +6,7 @@ import javax.persistence.*;
 @Table(name = "`index`")
 public class Index {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     private int id;
     @ManyToOne(fetch = FetchType.LAZY, targetEntity=Page.class)
     @JoinColumn(name="page_id")

@@ -3,9 +3,12 @@ package controller;
 import model.Lemma;
 import model.Page;
 import model.Site;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import repository.LemmaRepository;
@@ -24,8 +27,21 @@ public class StatisticsController {
     @Autowired
     private LemmaRepository lemmaRepository;
 
+    @Value("${logging-level}")
+    private String loggingLevel;
+
+    private static Logger loggerInfo;
+    private static Logger loggerDebug;
+
     @GetMapping("/statistics")
     public JSONObject statistics() {
+        loggerInfo = LogManager.getLogger("SearchEngineInfo");
+        loggerDebug = LogManager.getRootLogger();
+
+        if (loggingLevel.equals("info")) {
+            loggerInfo.info("[statistics] Begin.");
+        }
+
         JSONObject response = new JSONObject();
         response.put("result",  true);
 
@@ -41,6 +57,10 @@ public class StatisticsController {
         JSONArray detailed = new JSONArray();
         Iterable<Site> siteIterable = siteRepository.findAll();
         for (Site site : siteIterable) {
+            if (loggingLevel.equals("info")) {
+                loggerInfo.info("[statistics] For site " + site.getName() + " status " + site.getStatus());
+            }
+
             JSONObject objDetailed = new JSONObject();
             objDetailed.put("url", site.getUrl());
             objDetailed.put("name", site.getName());

@@ -7,7 +7,7 @@ import java.util.Date;
 @Table(name = "`site`")
 public class Site {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     private int id;
     @Enumerated(EnumType.STRING)
     @Column(name = "`status`",columnDefinition = "enum('INDEXING','INDEXED','FAILED')")

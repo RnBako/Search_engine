@@ -1,5 +1,6 @@
 package main;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
 
@@ -11,7 +12,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Lemmatizer {
-    public static HashMap<String, Integer> normalizeText (String inputText) throws IOException {
+    public static HashMap<String, Integer> normalizeText (String inputText, Logger loggerInfo, boolean isLogging) throws IOException {
+        if (isLogging) {
+            loggerInfo.info("[normalizeText] Begin.");
+        }
         String cleanText = inputText.replaceAll("[^А-ё]"," ").toLowerCase(Locale.ROOT) + " ";
         String regex = "[А-ё]+[\\s]";
         Pattern pattern = Pattern.compile(regex);
@@ -19,6 +23,11 @@ public class Lemmatizer {
         LuceneMorphology luceneMorphology = new RussianLuceneMorphology();
         List<String> wordBaseForms;
         HashMap<String, Integer> outputMap = new HashMap<>();
+
+        if (isLogging) {
+            loggerInfo.info("[normalizeText] Clean text - " + cleanText);
+        }
+
         while (matcher.find()) {
             String word = cleanText.substring(matcher.start(), matcher.end()).trim();
             wordBaseForms = luceneMorphology.getMorphInfo(word);
@@ -33,6 +42,10 @@ public class Lemmatizer {
             }
             if (!isAncillaryPart) {
                 outputMap.merge(word, 1, Integer::sum);
+
+                if (isLogging) {
+                    loggerInfo.info("[normalizeText] Work with " + word + ".");
+                }
             }
         }
 
