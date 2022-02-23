@@ -78,7 +78,6 @@ public class IndexRepositoryTest {
         Integer lemmas = lemma.getId();
 
         List<Index> indexList = indexRepository.findByLemmaAndLemmaSize(lemmas.toString(), 1);
-        System.out.println("Count index - " + indexList.size() + ", and - " + indexRepository.findAll().size());
         assertEquals(index, indexList.get(0));
     }
 }
