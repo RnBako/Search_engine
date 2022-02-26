@@ -1,5 +1,6 @@
 package main;
 
+import junit.framework.TestCase;
 import model.*;
 import org.apache.logging.log4j.LogManager;
 import org.junit.ClassRule;
@@ -19,6 +20,7 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import repository.*;
 
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,7 +36,7 @@ import static org.junit.Assert.assertEquals;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
 @ContextConfiguration(initializers = {SearchSystemTest.Initializer.class})
-public class SearchSystemTest {
+public class SearchSystemTest extends TestCase {
 
     @ClassRule
     public static MySQLContainer<?> database = new MySQLContainer<>("mysql:latest")
@@ -70,15 +72,8 @@ public class SearchSystemTest {
     private FieldRepository fieldRepository;
 
     @Test
-    public void searchPageTest() {
-        String userAgent = "Mozilla/5.0 (compatible; BakoBot/1.0;)";
-        Site site = new Site(Status.INDEXED, new Date(), "", "https://dimonvideo.ru", "demonvideo");
-        siteRepository.save(site);
-
-        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        SiteIndexator[] tasks = new SiteIndexator[1];
-        Future[] futures = new Future[1];
-
+    @Transactional
+    public void searchPageTest() throws Exception {
         List<Field> fields = new ArrayList<>();
         Field title = new Field("title", "title", 1);
         fieldRepository.save(title);
@@ -87,31 +82,24 @@ public class SearchSystemTest {
         fieldRepository.save(body);
         fields.add(body);
 
-        try {
-            SiteIndexator siteIndexator = new SiteIndexator(site,"/usernews/3/1/dateD/0", userAgent, fields, siteRepository, indexRepository, lemmaRepository, pageRepository, LogManager.getLogger("SearchEngineInfo"), LogManager.getRootLogger(), false);
-            tasks[0] = siteIndexator;
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        String userAgent = "Mozilla/5.0 (compatible; BakoBot/1.0;)";
+        Site site = new Site(Status.INDEXED, new Date(), "", "https://www.playback.ru", "playback");
+        siteRepository.save(site);
+
+        SiteIndexator siteIndexator = new SiteIndexator(site,"/our_delivery.html", userAgent, fields, siteRepository, indexRepository, lemmaRepository, pageRepository, LogManager.getLogger("SearchEngineInfo"), LogManager.getRootLogger(), false);
+        siteIndexator.run();
+
+        List<SearchResult> searchResultsActual = SearchSystem.searchPage("Доставка", site.getUrl(), lemmaRepository, siteRepository, indexRepository, fieldRepository, 250, LogManager.getLogger("SearchEngineInfo"), false);
+        Page pageActual = null;
+        for (SearchResult searchResult : searchResultsActual) {
+            if (searchResult.getPage().getPath() == "/our_delivery.html") pageActual = searchResult.getPage();
         }
 
-        futures[0] = executorService.submit(tasks[0]);
-        executorService.shutdown();
+        Iterable<Page> pageIterable = pageRepository.findBySiteIdAndPath(site.getId(), "/our_delivery.html");
+        List<Page> pages = new ArrayList<>();
+        pageIterable.forEach(pages::add);
+        Page pageExpected = pages.get(0);
 
-        try {
-            List<SearchResult> searchResultsActual = SearchSystem.searchPage("Фильм", site.getUrl(), lemmaRepository, siteRepository, indexRepository, fieldRepository, 250, LogManager.getLogger("SearchEngineInfo"), false);
-            Page pageActual = null;
-            for (SearchResult searchResult : searchResultsActual) {
-                if (searchResult.getPage().getPath() == "/usernews/3/1/dateD/0") pageActual = searchResult.getPage();
-            }
-
-            Iterable<Page> pageIterable = pageRepository.findBySiteIdAndPath(site.getId(), "/usernews/3/1/dateD/0");
-            List<Page> pages = new ArrayList<>();
-            pageIterable.forEach(pages::add);
-            Page pageExpected = pages.get(0);
-
-            assertEquals(pageExpected, pageActual);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        assertEquals(pageExpected, pageActual);
     }
 }

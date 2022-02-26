@@ -35,7 +35,7 @@ public class SiteIndexator implements Runnable{
     private static boolean isLogging;
 
 
-    public SiteIndexator (Site root, String firstPagePath, String userAgent, List<Field> fields, SiteRepository siteRepository, IndexRepository indexRepository, LemmaRepository lemmaRepository, PageRepository pageRepository, Logger loggerInfo, Logger loggerException, boolean isLogging) throws Exception {
+    public SiteIndexator (Site root, String firstPagePath, String userAgent, List<Field> fields, SiteRepository siteRepository, IndexRepository indexRepository, LemmaRepository lemmaRepository, PageRepository pageRepository, Logger loggerInfo, Logger loggerException, boolean isLogging) {
         isActive = true;
         this.root = root;
         SiteIndexator.firstPagePath = firstPagePath;
@@ -52,21 +52,19 @@ public class SiteIndexator implements Runnable{
 
     @Override
     public void run() {
-        while (isActive) {
-            try {
-                Page firstPage = new Page((firstPagePath == "") ? "/" : firstPagePath, 200, Jsoup.connect(root.getUrl())
+        try {
+            Page firstPage = new Page((firstPagePath == "") ? "/" : firstPagePath, 200, Jsoup.connect(root.getUrl())
                     .userAgent(userAgent)
                     .referrer("http://www.google.com")
                     .maxBodySize(0).get().toString(),
                     root);
-                setSiteStatus(root, Status.INDEXING, "");
-                Page page = toIndex(firstPage, loggerInfo, isLogging);
-                setSiteStatus(root, Status.INDEXED, "");
-            } catch (Exception ex) {
-                isActive = false;
-                setSiteStatus(root, Status.FAILED, ex.getMessage());
-                loggerException.debug(ex.getStackTrace());
-            }
+            setSiteStatus(root, Status.INDEXING, "");
+            Page page = toIndex(firstPage, loggerInfo, isLogging);
+            setSiteStatus(root, Status.INDEXED, "");
+        } catch (Exception ex) {
+            isActive = false;
+            setSiteStatus(root, Status.FAILED, ex.getMessage());
+            loggerException.debug(ex.getStackTrace());
         }
     }
 
@@ -131,7 +129,13 @@ public class SiteIndexator implements Runnable{
         }
 
         Elements hrefUI = document.select("a");
-        if (hrefUI.size() < 1) return page;
+        if (hrefUI.size() < 1) {
+            if (isLogging) {
+                loggerInfo.info("Call for page " + page.getPath() + ", root -" + root.getUrl() + " - finished!");
+            }
+            return page;
+        }
+
         for (org.jsoup.nodes.Element element : hrefUI) {
             if (pageList.get(element.attr("href")) == null &&
                     !element.attr("href").isEmpty() &&

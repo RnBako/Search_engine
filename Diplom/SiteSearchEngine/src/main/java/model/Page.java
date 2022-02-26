@@ -10,11 +10,11 @@ public class Page {
     @Id
     @GeneratedValue
     private int id;
-    @Column(name = "path")
+    @Column(name = "path", columnDefinition = "text")
     private String path;
     @Column(name = "code")
     private int code;
-    @Column(name = "content")
+    @Column(name = "content", columnDefinition = "mediumtext")
     private String content;
     @ManyToOne(fetch = FetchType.LAZY, targetEntity=Site.class)
     @JoinColumn(name="site_id")
