@@ -1,5 +1,6 @@
 package main;
 
+import junit.framework.TestCase;
 import model.Lemma;
 import model.Site;
 import model.Status;
@@ -32,7 +33,7 @@ import java.util.List;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
 @ContextConfiguration(initializers = {LemmaRepositoryTest.Initializer.class})
-public class LemmaRepositoryTest {
+public class LemmaRepositoryTest extends TestCase {
 
     @ClassRule
     public static MySQLContainer<?> database = new MySQLContainer<>("mysql:latest")
@@ -59,7 +60,7 @@ public class LemmaRepositoryTest {
     private SiteRepository siteRepository;
 
     @Test
-    public void findByFrequencyAndLemmaInTest() {
+    public void testFindByFrequencyAndLemmaIn() {
         Site site = new Site(Status.INDEXED, new Date(), "", "https://dimonvideo.ru", "dimonvideo");
         siteRepository.save(site);
         Lemma lemma = new Lemma("фильм", 1, site);
@@ -71,14 +72,14 @@ public class LemmaRepositoryTest {
     }
 
     @Test
-    public void findBySiteAndFrequencyAndLemmaInTest() {
+    public void testFindBySiteAndFrequencyAndLemmaIn() {
         Site site = new Site(Status.INDEXED, new Date(), "", "https://dimonvideo.ru", "dimonvideo");
         siteRepository.save(site);
         Lemma lemma = new Lemma("фильм", 1, site);
         lemmaRepository.save(lemma);
 
         String lemmas = "\'фильм\'";
-        List<Lemma> lemmaList= lemmaRepository.findBySiteAndFrequencyAndLemmaIn(1, 1, lemmas);
+        List<Lemma> lemmaList= lemmaRepository.findBySiteAndFrequencyAndLemmaIn(site.getId(), 1, lemmas);
         assertEquals(lemma, lemmaList.get(0));
     }
 }

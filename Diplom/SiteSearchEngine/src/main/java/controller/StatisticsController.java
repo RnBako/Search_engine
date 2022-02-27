@@ -10,6 +10,8 @@ import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import repository.LemmaRepository;
 import repository.PageRepository;
@@ -34,6 +36,7 @@ public class StatisticsController {
     private static Logger loggerDebug;
 
     @GetMapping("/statistics")
+//    @RequestMapping(value = "/", method = RequestMethod.GET)
     public JSONObject statistics() {
         loggerInfo = LogManager.getLogger("SearchEngineInfo");
         loggerDebug = LogManager.getRootLogger();

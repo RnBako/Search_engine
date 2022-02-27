@@ -1,5 +1,6 @@
 package main;
 
+import junit.framework.TestCase;
 import model.*;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -29,7 +30,7 @@ import java.util.List;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
 @ContextConfiguration(initializers = {IndexRepositoryTest.Initializer.class})
-public class IndexRepositoryTest {
+public class IndexRepositoryTest extends TestCase {
 
     @ClassRule
     public static MySQLContainer<?> database = new MySQLContainer<>("mysql:latest")
@@ -65,7 +66,7 @@ public class IndexRepositoryTest {
     private static FieldRepository fieldRepository;
 
     @Test
-    public void findByLemmaAndLemmaSizeTest() {
+    public void testFindByLemmaAndLemmaSize() {
         Site site = new Site(Status.INDEXED, new Date(), "", "https://dimonvideo.ru", "dimonvideo");
         siteRepository.save(site);
         Lemma lemma = new Lemma("фильм", 1, site);
@@ -79,11 +80,5 @@ public class IndexRepositoryTest {
 
         List<Index> indexList = indexRepository.findByLemmaAndLemmaSize(lemmas.toString(), 1);
         assertEquals(index, indexList.get(0));
-    }
-
-    @Test
-    public void searchPageTest() {
-        Site site = new Site(Status.INDEXED, new Date(), "", "https://dimonvideo.ru", "demonvideo");
-        siteRepository.save(site);
     }
 }

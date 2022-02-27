@@ -1,3 +1,5 @@
+package main;
+
 import junit.framework.TestCase;
 import main.Lemmatizer;
 import org.apache.logging.log4j.LogManager;

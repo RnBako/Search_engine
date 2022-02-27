@@ -102,7 +102,7 @@ public class IndexingController {
                     SiteIndexator siteIndexator = new SiteIndexator(site, "", userAgent, fields, siteRepository, indexRepository, lemmaRepository, pageRepository, loggerInfo, loggerDebug, loggingLevel.equals("info"));
 
                     if (loggingLevel.equals("info")) {
-                        loggerInfo.info("[startIndexing] For site - " + site.getName() + " indexator is started.");
+                        loggerInfo.info("[startIndexing] For site - " + site.getName() + " indexator is created.");
                     }
 
                     tasks[j] = siteIndexator;
@@ -116,6 +116,9 @@ public class IndexingController {
             j = 0;
             for (SiteIndexator task : tasks) {
                 futures[j] = executorService.submit(task);
+                if (loggingLevel.equals("info")) {
+                    loggerInfo.info("[startIndexing] For task - " + task + " indexator is started.");
+                }
                 j++;
             }
             executorService.shutdownNow();

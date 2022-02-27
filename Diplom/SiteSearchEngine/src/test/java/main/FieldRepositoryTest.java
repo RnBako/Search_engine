@@ -1,5 +1,6 @@
 package main;
 
+import junit.framework.TestCase;
 import model.Field;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,13 +15,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringRunner.class)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public class FieldRepositoryTest {
+public class FieldRepositoryTest extends TestCase {
 
     @Autowired
     private FieldRepository fieldRepository;
 
     @Test
-    public void findAllTest() {
+    public void testFindAll() {
         Iterable<Field> fields = fieldRepository.findAll();
 
         int countOfFields = 0;
