@@ -1,4 +1,4 @@
-package main;
+package main.Unit;
 
 import junit.framework.TestCase;
 import model.Lemma;
@@ -21,8 +21,6 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import repository.LemmaRepository;
 import repository.SiteRepository;
-
-import static org.junit.Assert.*;
 
 import java.util.Date;
 import java.util.List;

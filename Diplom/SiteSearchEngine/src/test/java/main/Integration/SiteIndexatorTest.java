@@ -1,7 +1,11 @@
-package main;
+package main.Integration;
 
 import junit.framework.TestCase;
-import model.*;
+import main.SiteIndexator;
+import model.Field;
+import model.Site;
+import model.Status;
+import org.apache.logging.log4j.LogManager;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,8 +23,8 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import repository.*;
 
-import static org.junit.Assert.*;
-
+import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -29,8 +33,8 @@ import java.util.List;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
-@ContextConfiguration(initializers = {IndexRepositoryTest.Initializer.class})
-public class IndexRepositoryTest extends TestCase {
+@ContextConfiguration(initializers = {SiteIndexatorTest.Initializer.class})
+public class SiteIndexatorTest extends TestCase {
 
     @ClassRule
     public static MySQLContainer<?> database = new MySQLContainer<>("mysql:latest")
@@ -63,22 +67,27 @@ public class IndexRepositoryTest extends TestCase {
     private SiteRepository siteRepository;
 
     @Autowired
-    private static FieldRepository fieldRepository;
+    private FieldRepository fieldRepository;
 
     @Test
-    public void testFindByLemmaAndLemmaSize() {
-        Site site = new Site(Status.INDEXED, new Date(), "", "https://dimonvideo.ru", "dimonvideo");
+    @Transactional
+    public void testSiteIndexator() {
+        List<Field> fields = new ArrayList<>();
+        Field title = new Field("title", "title", 1);
+        fieldRepository.save(title);
+        fields.add(title);
+        Field body = new Field("body", "body", (float) 0.8);
+        fieldRepository.save(body);
+        fields.add(body);
+
+        String userAgent = "Mozilla/5.0 (compatible; BakoBot/1.0;)";
+        Site site = new Site(Status.INDEXED, new Date(), "", "https://aquatoria.com/", "aquatoria");
         siteRepository.save(site);
-        Lemma lemma = new Lemma("фильм", 1, site);
-        lemmaRepository.save(lemma);
-        Page page = new Page("/", 200, "<html> <head></head> <body></body> </html>", site);
-        pageRepository.save(page);
-        Index index = new Index(page, lemma, (float) 0.9);
-        indexRepository.save(index);
 
-        Integer lemmas = lemma.getId();
+        SiteIndexator siteIndexator = new SiteIndexator(site,"/", userAgent, fields, siteRepository, indexRepository, lemmaRepository, pageRepository, LogManager.getLogger("SearchEngineInfo"), LogManager.getRootLogger(), true);
+        siteIndexator.run();
+        siteIndexator.interrupt();
 
-        List<Index> indexList = indexRepository.findByLemmaAndLemmaSize(lemmas.toString(), 1);
-        assertEquals(index, indexList.get(0));
+        assertEquals(9, pageRepository.findAll().size());
     }
 }

@@ -1,8 +1,7 @@
-package main;
+package main.Unit;
 
 import junit.framework.TestCase;
 import model.*;
-import org.apache.logging.log4j.LogManager;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,8 +19,6 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import repository.*;
 
-import javax.transaction.Transactional;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -30,8 +27,8 @@ import java.util.List;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
-@ContextConfiguration(initializers = {SearchSystemTest.Initializer.class})
-public class SearchSystemTest extends TestCase {
+@ContextConfiguration(initializers = {IndexRepositoryTest.Initializer.class})
+public class IndexRepositoryTest extends TestCase {
 
     @ClassRule
     public static MySQLContainer<?> database = new MySQLContainer<>("mysql:latest")
@@ -64,37 +61,22 @@ public class SearchSystemTest extends TestCase {
     private SiteRepository siteRepository;
 
     @Autowired
-    private FieldRepository fieldRepository;
+    private static FieldRepository fieldRepository;
 
     @Test
-    @Transactional
-    public void testSearchPage() throws Exception {
-        List<Field> fields = new ArrayList<>();
-        Field title = new Field("title", "title", 1);
-        fieldRepository.save(title);
-        fields.add(title);
-        Field body = new Field("body", "body", (float) 0.8);
-        fieldRepository.save(body);
-        fields.add(body);
-
-        String userAgent = "Mozilla/5.0 (compatible; BakoBot/1.0;)";
-        Site site = new Site(Status.INDEXED, new Date(), "", "https://www.playback.ru", "playback");
+    public void testFindByLemmaAndLemmaSize() {
+        Site site = new Site(Status.INDEXED, new Date(), "", "https://dimonvideo.ru", "dimonvideo");
         siteRepository.save(site);
+        Lemma lemma = new Lemma("фильм", 1, site);
+        lemmaRepository.save(lemma);
+        Page page = new Page("/", 200, "<html> <head></head> <body></body> </html>", site);
+        pageRepository.save(page);
+        Index index = new Index(page, lemma, (float) 0.9);
+        indexRepository.save(index);
 
-        SiteIndexator siteIndexator = new SiteIndexator(site,"/our_delivery.html", userAgent, fields, siteRepository, indexRepository, lemmaRepository, pageRepository, LogManager.getLogger("SearchEngineInfo"), LogManager.getRootLogger(), true);
-        siteIndexator.run();
+        Integer lemmas = lemma.getId();
 
-        List<SearchResult> searchResultsActual = SearchSystem.searchPage("Доставка", site.getUrl(), lemmaRepository, siteRepository, indexRepository, fieldRepository, 250, LogManager.getLogger("SearchEngineInfo"), true);
-        Page pageActual = null;
-        for (SearchResult searchResult : searchResultsActual) {
-            if (searchResult.getPage().getPath() == "/our_delivery.html") pageActual = searchResult.getPage();
-        }
-
-        Iterable<Page> pageIterable = pageRepository.findBySiteIdAndPath(site.getId(), "/our_delivery.html");
-        List<Page> pages = new ArrayList<>();
-        pageIterable.forEach(pages::add);
-        Page pageExpected = pages.get(0);
-
-        assertEquals(pageExpected, pageActual);
+        List<Index> indexList = indexRepository.findByLemmaAndLemmaSize(lemmas.toString(), 1);
+        assertEquals(index, indexList.get(0));
     }
 }

@@ -1,4 +1,4 @@
-package main;
+package main.Unit;
 
 import controller.DefaultController;
 import org.junit.jupiter.api.Test;

@@ -1,4 +1,4 @@
-package main;
+package main.Unit;
 
 import junit.framework.TestCase;
 import model.Field;

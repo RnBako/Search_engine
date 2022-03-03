@@ -1,12 +1,10 @@
-package main;
+package main.Integration;
 
 import junit.framework.TestCase;
-import model.Field;
-import model.Page;
-import model.Site;
-import model.Status;
+import main.SearchSystem;
+import main.SiteIndexator;
+import model.*;
 import org.apache.logging.log4j.LogManager;
-import org.jsoup.Jsoup;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,8 +32,8 @@ import java.util.List;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
-@ContextConfiguration(initializers = {SiteIndexatorTest.Initializer.class})
-public class SiteIndexatorTest extends TestCase {
+@ContextConfiguration(initializers = {SearchSystemTest.Initializer.class})
+public class SearchSystemTest extends TestCase {
 
     @ClassRule
     public static MySQLContainer<?> database = new MySQLContainer<>("mysql:latest")
@@ -72,7 +70,7 @@ public class SiteIndexatorTest extends TestCase {
 
     @Test
     @Transactional
-    public void testSiteIndexator() {
+    public void testSearchPage() throws Exception {
         List<Field> fields = new ArrayList<>();
         Field title = new Field("title", "title", 1);
         fieldRepository.save(title);
@@ -82,13 +80,23 @@ public class SiteIndexatorTest extends TestCase {
         fields.add(body);
 
         String userAgent = "Mozilla/5.0 (compatible; BakoBot/1.0;)";
-        Site site = new Site(Status.INDEXED, new Date(), "", "https://aquatoria.com/", "aquatoria");
+        Site site = new Site(Status.INDEXED, new Date(), "", "https://www.playback.ru", "playback");
         siteRepository.save(site);
 
-        SiteIndexator siteIndexator = new SiteIndexator(site,"/", userAgent, fields, siteRepository, indexRepository, lemmaRepository, pageRepository, LogManager.getLogger("SearchEngineInfo"), LogManager.getRootLogger(), true);
+        SiteIndexator siteIndexator = new SiteIndexator(site,"/our_delivery.html", userAgent, fields, siteRepository, indexRepository, lemmaRepository, pageRepository, LogManager.getLogger("SearchEngineInfo"), LogManager.getRootLogger(), true);
         siteIndexator.run();
-        siteIndexator.interrupt();
 
-        assertEquals(9, pageRepository.findAll().size());
+        List<SearchResult> searchResultsActual = SearchSystem.searchPage("Доставка", site.getUrl(), lemmaRepository, siteRepository, indexRepository, fieldRepository, 250, LogManager.getLogger("SearchEngineInfo"), true);
+        Page pageActual = null;
+        for (SearchResult searchResult : searchResultsActual) {
+            if (searchResult.getPage().getPath() == "/our_delivery.html") pageActual = searchResult.getPage();
+        }
+
+        Iterable<Page> pageIterable = pageRepository.findBySiteIdAndPath(site.getId(), "/our_delivery.html");
+        List<Page> pages = new ArrayList<>();
+        pageIterable.forEach(pages::add);
+        Page pageExpected = pages.get(0);
+
+        assertEquals(pageExpected, pageActual);
     }
 }

@@ -1,4 +1,4 @@
-package main;
+package main.Unit;
 
 import controller.IndexingController;
 import org.springframework.beans.factory.annotation.Autowired;
