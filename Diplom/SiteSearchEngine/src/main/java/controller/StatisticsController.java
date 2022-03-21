@@ -10,8 +10,6 @@ import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import repository.LemmaRepository;
 import repository.PageRepository;
@@ -19,24 +17,39 @@ import repository.SiteRepository;
 
 import java.util.List;
 
-
+/**
+ * Class of statistics page controller
+ * @author Roman Barsuchenko
+ * @version 1.0
+ */
 @RestController
 public class StatisticsController {
+    /** Repository of sites*/
     @Autowired
     private SiteRepository siteRepository;
+
+    /** Repository of pages*/
     @Autowired
     private PageRepository pageRepository;
+
+    /** Repository of lemmas*/
     @Autowired
     private LemmaRepository lemmaRepository;
 
+    /** Logging level properties from configuration*/
     @Value("${logging-level}")
     private String loggingLevel;
 
+    /** Logger for info logging*/
     private static Logger loggerInfo;
+    /** Logger for debug logging*/
     private static Logger loggerDebug;
 
+    /**
+     * Method that returns statistics on sites, pages and lemmas from the database
+     * @return return JSON object with statistics for statistics page
+     */
     @GetMapping("/statistics")
-//    @RequestMapping(value = "/", method = RequestMethod.GET)
     public JSONObject statistics() {
         loggerInfo = LogManager.getLogger("SearchEngineInfo");
         loggerDebug = LogManager.getRootLogger();

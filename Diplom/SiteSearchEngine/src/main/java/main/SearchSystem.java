@@ -18,7 +18,26 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * Search class for text in indexed sites
+ * @author Roman Barsuchenko
+ * @version 1.0
+ */
 public class SearchSystem {
+    /**
+     * Method for searching pages with given texts
+     * @param query - Query text
+     * @param site - The site we are looking for
+     * @param lemmaRepository - Repository of lemmas
+     * @param siteRepository - Repository of sites
+     * @param indexRepository - Repository of indexes
+     * @param fieldRepository - Repository of fields
+     * @param maxFrequency - Max frequency
+     * @param loggerInfo - Logger object for info logging
+     * @param isLogging - To log or not
+     * @return Returns list with the search result
+     * @throws IOException Exception when working with text
+     */
     public static List<SearchResult> searchPage(String query, String site, LemmaRepository lemmaRepository, SiteRepository siteRepository, IndexRepository indexRepository, FieldRepository fieldRepository, Integer maxFrequency, Logger loggerInfo, boolean isLogging) throws IOException {
         if (isLogging) {
             loggerInfo.info("[searchPage] Begin.");
@@ -93,6 +112,15 @@ public class SearchSystem {
         return searchResults;
     }
 
+    /**
+     * Ыnippet generation method
+     * @param elementForGenerate - JSON element for generate
+     * @param lemmaSearchLine - Lemmas from search text
+     * @param snippet - JSON element for snippet
+     * @param loggerInfo - Logger object for info logging
+     * @param isLogging - To log or not
+     * @throws IOException
+     */
     private static void generateSnippet(Element elementForGenerate, HashMap<String, Integer> lemmaSearchLine, Element snippet, Logger loggerInfo, boolean isLogging) throws IOException {
         HashMap<String, Collection<Integer>> textMap = new HashMap<>();
 

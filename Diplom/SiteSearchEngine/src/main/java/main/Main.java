@@ -8,6 +8,11 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+/**
+ * Main class of BakoSearch project
+ * @author Roman Barsuchenko
+ * @version 1.0
+ */
 @SpringBootApplication
 @ComponentScan("controller")
 @EntityScan("model")
@@ -19,6 +24,5 @@ public class Main {
         loggerInfo = LogManager.getLogger("SearchEngineInfo");
         SpringApplication.run(Main.class, args);
         loggerInfo.info("Search engine is started");
-
     }
 }

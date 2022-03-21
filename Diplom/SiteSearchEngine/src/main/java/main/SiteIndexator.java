@@ -16,25 +16,58 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Site indexing class
+ * @author Roman Barsuchenko
+ * @version 1.0
+ */
 public class SiteIndexator implements Runnable{
 
+    /** Indexator activity parameter*/
     private boolean isActive;
+    /** Root site*/
     private final Site root;
+    /** User agent for site indexator*/
     private static String userAgent;
+    /** Repository of sites*/
     private static SiteRepository siteRepository;
+    /** Repository of indexes*/
     private static IndexRepository indexRepository;
+    /** Repository of lemmas*/
     private static LemmaRepository lemmaRepository;
+    /** Repository of pages*/
     private static PageRepository pageRepository;
+    /** List of fields*/
     private static List<Field> fields;
+    /** List of unique pages in progress*/
     private final Map<String, Page> pageList = new ConcurrentHashMap<>();
+    /** List of unique lemmas in progress*/
     private final Map<String, Lemma> lemmaList = new ConcurrentHashMap<>();
+    /** List of unique indexes in progress*/
     private final Map<String, Index> indexList = new ConcurrentHashMap<>();
+    /** Path to first page*/
     private static String firstPagePath;
+    /** Logger for info logging*/
     private static Logger loggerInfo;
+    /** Logger for debug logging*/
     private static Logger loggerException;
+    /** To log or not */
     private static boolean isLogging;
 
-
+    /**
+     * New object constructor
+     * @param root - Root site
+     * @param firstPagePath - Path to first page
+     * @param userAgent - User-agent properties from configuration
+     * @param fields - List of fields
+     * @param siteRepository - Repository of sites
+     * @param indexRepository - Repository of indexes
+     * @param lemmaRepository - Repository of lemmas
+     * @param pageRepository - Repository of pages
+     * @param loggerInfo - Logger for info logging
+     * @param loggerException - Logger for debug logging
+     * @param isLogging - To log or not
+     */
     public SiteIndexator (Site root, String firstPagePath, String userAgent, List<Field> fields, SiteRepository siteRepository, IndexRepository indexRepository, LemmaRepository lemmaRepository, PageRepository pageRepository, Logger loggerInfo, Logger loggerException, boolean isLogging) {
         isActive = true;
         this.root = root;
@@ -50,6 +83,9 @@ public class SiteIndexator implements Runnable{
         this.isLogging = isLogging;
     }
 
+    /**
+     * Overridden method for running on a thread
+     */
     @Override
     public void run() {
         try {
@@ -68,10 +104,19 @@ public class SiteIndexator implements Runnable{
         }
     }
 
+    /**
+     * Thread interrupt method
+     */
     public void interrupt() {
         isActive = false;
     }
 
+    /**
+     * Site status change method
+     * @param site - Site for change status
+     * @param status - Status to be changed to
+     * @param error - Error text, if any
+     */
     private void setSiteStatus(Site site, Status status, String error) {
         site.setStatus(status);
         site.setStatusTime(new Date());
@@ -79,6 +124,14 @@ public class SiteIndexator implements Runnable{
         siteRepository.save(site);
     }
 
+    /**
+     * Page indexing method
+     * @param page - Page for indexing
+     * @param loggerInfo - Logger object for info logging
+     * @param isLogging - To log or not
+     * @return Return indexed page
+     * @throws Exception
+     */
     private synchronized Page toIndex(Page page, Logger loggerInfo, boolean isLogging) throws Exception{
         if (isLogging) {
             loggerInfo.info("Call for " + page.getPath() + " - started! PageList size - " + pageList.size() + ". root - " + root.getUrl());

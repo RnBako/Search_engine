@@ -6,6 +6,11 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Repository interface for sites
+ * @author Roman Barsuchenko
+ * @version 1.0
+ */
 @Repository
 public interface SiteRepository extends CrudRepository<Site, Integer> {
     public List<Site> findAll();

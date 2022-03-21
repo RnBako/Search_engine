@@ -11,7 +11,21 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Class for text lemmatization
+ * @author Roman Barsuchenko
+ * @version 1.0
+ */
 public class Lemmatizer {
+
+    /**
+     * Method for text lemmatization
+     * @param inputText - Text for lemmatization
+     * @param loggerInfo - Logger object for info logging
+     * @param isLogging - To log or not
+     * @return Returns map of text lemmas
+     * @throws IOException Exception when working with text
+     */
     public static HashMap<String, Integer> normalizeText (String inputText, Logger loggerInfo, boolean isLogging) throws IOException {
         if (isLogging) {
             loggerInfo.info("[normalizeText] Begin.");

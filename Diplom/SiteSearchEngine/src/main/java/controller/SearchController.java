@@ -17,30 +17,51 @@ import repository.SiteRepository;
 
 import java.util.List;
 
+/**
+ * Class of search page controller
+ * @author Roman Barsuchenko
+ * @version 1.0
+ */
 @RestController
 public class SearchController {
 
+    /** Repository of lemmas*/
     @Autowired
     private LemmaRepository lemmaRepository;
 
+    /** Repository of sites*/
     @Autowired
     private SiteRepository siteRepository;
 
+    /** Repository of indexes*/
     @Autowired
     private IndexRepository indexRepository;
 
+    /** Repository of fields*/
     @Autowired
     private FieldRepository fieldRepository;
 
+    /** Max frequency properties from configuration*/
     @Value("${max-frequency}")
     private String maxFrequency;
 
+    /** Logging level properties from configuration*/
     @Value("${logging-level}")
     private String loggingLevel;
 
+    /** Logger for info logging*/
     private static Logger loggerInfo;
+    /** Logger for debug logging*/
     private static Logger loggerDebug;
 
+    /**
+     * Method for searching given text on indexed pages
+     * @param query - Text for search
+     * @param site - Site to search
+     * @param offset - Offset from 0 for paging
+     * @param limit - Number of results to display
+     * @return return JSON object with search result for search page
+     */
     @GetMapping("/search")
     public JSONObject search (String query, String site, Integer offset, Integer limit) {
         loggerInfo = LogManager.getLogger("SearchEngineInfo");
@@ -54,7 +75,7 @@ public class SearchController {
                 }
 
                 response.put("result", false);
-                response.put("error", "Задан пустой поисковый запрос");
+                response.put("error", "An empty search term has been specified");
                 return response;
             }
 

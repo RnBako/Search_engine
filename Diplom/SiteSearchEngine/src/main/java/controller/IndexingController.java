@@ -17,39 +17,62 @@ import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Class of index page controller
+ * @author Roman Barsuchenko
+ * @version 1.0
+ */
+
 @RestController
 public class IndexingController {
+    /** Parameter to get sites list from the configuration*/
     @Autowired
     SiteService siteService;
 
+    /** Repository of fields*/
     @Autowired
     private FieldRepository fieldRepository;
 
+    /** Repository of indexes*/
     @Autowired
     private IndexRepository indexRepository;
 
+    /** Repository of lemmas*/
     @Autowired
     private LemmaRepository lemmaRepository;
 
+    /** Repository of pages*/
     @Autowired
     private PageRepository pageRepository;
 
+    /** Repository of sites*/
     @Autowired
     private SiteRepository siteRepository;
 
+    /** User-agent properties from configuration*/
     @Value("${user-agent}")
     private String userAgent;
 
+    /** Logging level properties from configuration*/
     @Value("${logging-level}")
     private String loggingLevel;
 
+    /** Logger for info logging*/
     private static Logger loggerInfo;
+    /** Logger for debug logging*/
     private static Logger loggerDebug;
 
+    /** ExecutorService for multithreaded indexing*/
     private static ExecutorService executorService = null;
+    /** SiteIndexator for multithreaded indexing*/
     private static SiteIndexator[] tasks;
+    /** Threads for SiteIndexator*/
     private static Future[] futures;
 
+    /**
+     * Sites indexing start method
+     * @return return JSON object with result start indexing for index page
+     */
     @GetMapping("/startIndexing")
     public JSONObject startIndexing() {
         loggerInfo = LogManager.getLogger("SearchEngineInfo");
@@ -71,7 +94,7 @@ public class IndexingController {
                 loggerInfo.info("[startIndexing] Indexing started");
             }
             response.put("result", false);
-            response.put("error", "Индексация уже запущена");
+            response.put("error", "Indexing is running");
         } else {
             if (loggingLevel.equals("info")) {
                 loggerInfo.info("[startIndexing] Indexing begin. Sites count - " + sitesFromDB.size());
@@ -130,6 +153,10 @@ public class IndexingController {
         return response;
     }
 
+    /**
+     * Sites indexing stop method
+     * @return return JSON object with result stop indexing for index page
+     */
     @GetMapping("/stopIndexing")
     public JSONObject stopIndexing() {
         loggerInfo = LogManager.getLogger("SearchEngineInfo");
@@ -172,11 +199,16 @@ public class IndexingController {
             }
 
             response.put("result", false);
-            response.put("error", "Индексация не запущена");
+            response.put("error", "Indexing is not running");
         }
         return response;
     }
 
+    /**
+     * Site or page indexing start method
+     * @param url - page URL to be indexed
+     * @return return JSON object with result start indexing for index page
+     */
     @PostMapping("/indexPage")
     public JSONObject indexPage(String url) {
         loggerInfo = LogManager.getLogger("SearchEngineInfo");
@@ -263,11 +295,15 @@ public class IndexingController {
             }
 
             response.put("result", false);
-            response.put("error", "Данная страница находится за пределами сайтов, указанных в конфигурационном файле");
+            response.put("error", "This page is outside the sites specified in the configuration file");
         }
         return response;
     }
 
+    /**
+     * Method for synchronisation sites list in database and configuration
+     * @param sitesFromDB - Sites list from database
+     */
     private void syncSitePropertiesAndDB(HashMap<String, Site> sitesFromDB) {
         loggerInfo = LogManager.getLogger("SearchEngineInfo");
         loggerDebug = LogManager.getRootLogger();
@@ -286,6 +322,12 @@ public class IndexingController {
         }
     }
 
+    /**
+     * Site status change method
+     * @param site - Site for change status
+     * @param status - Status to be changed to
+     * @param error - Error text, if any
+     */
     private void setSiteStatus(Site site, Status status, String error) {
         loggerInfo = LogManager.getLogger("SearchEngineInfo");
         loggerDebug = LogManager.getRootLogger();
@@ -300,6 +342,10 @@ public class IndexingController {
         siteRepository.save(site);
     }
 
+    /**
+     * Method for getting fields
+     * @return Returns a list of fields from the database
+     */
     private List<Field> getFields() {
         Iterable<Field> fieldIterable = fieldRepository.findAll();
         List<Field> fields = new ArrayList<>();
