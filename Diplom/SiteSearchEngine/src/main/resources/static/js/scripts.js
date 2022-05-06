@@ -1457,7 +1457,7 @@ var API = function(){
             }
         });
     }
-    
+
     var send = {
         startIndexing:{
             address: '/startIndexing',
@@ -1589,6 +1589,7 @@ var API = function(){
                     $('#totalPages').text(result.statistics.total.pages);
                     $('#totalLemmas').text(result.statistics.total.lemmas);
                     $('select[name="site"] option').not(':first-child').remove();
+                    result.statistics.total.isIndexing = false;
                     result.statistics.detailed.forEach(function(site){
                         var $blockSiteExample = $('.Statistics-example').clone(true);
                         var statusClass = '';
@@ -1601,6 +1602,7 @@ var API = function(){
                                 break;
                             case 'INDEXING':
                                 statusClass = 'Statistics-status_pause';
+                                result.statistics.total.isIndexing = true;
                                 break;
 
                         }
