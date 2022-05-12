@@ -163,7 +163,7 @@ public class SearchSystem {
         for (String searchWord : lemmaSearchLine.keySet()) {
             if (textMap.get(searchWord) != null) {
                 int index = textMap.get(searchWord).stream().findFirst().get();
-                if (index > 0) {
+                if (index > 0 && textMap.size() > 10) {
                     String temp = elementForGenerate.text().substring(0, index);
                     for (int i = 0; i < 6; i++) {
                         temp = temp.substring(0, temp.lastIndexOf(" "));
@@ -173,6 +173,16 @@ public class SearchSystem {
                     for (int i = 0; i < 6; i++) {
                         temp = temp.substring(temp.indexOf(" ")).trim();
                     }
+                    String subsequentText = elementForGenerate.text().substring(index, elementForGenerate.text().length() - temp.length());
+                    String boldWord = subsequentText.substring(0, subsequentText.indexOf(" "));
+                    subsequentText = subsequentText.substring(subsequentText.indexOf(" "));
+                    snippet.appendText(previousText);
+                    snippet.appendElement("b").appendText(boldWord);
+                    snippet.appendText(subsequentText);
+                } else if (index > 0) {
+                    String previousText = elementForGenerate.text().substring(0, index);
+                    String temp = elementForGenerate.text().substring(index);
+                    temp = temp.substring(temp.indexOf(" ")).trim();
                     String subsequentText = elementForGenerate.text().substring(index, elementForGenerate.text().length() - temp.length());
                     String boldWord = subsequentText.substring(0, subsequentText.indexOf(" "));
                     subsequentText = subsequentText.substring(subsequentText.indexOf(" "));
