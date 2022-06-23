@@ -199,21 +199,4 @@ $RECYCLE.BIN/
 # End of https://www.gitignore.io/api/java,linux,macos,maven,windows,jetbrains
 **/.idea/
 **/target/
-/03_ObjectsAndMethods/
-/04_Encapsulation/
-/05_StaticFinal/
-/06_PrimitiveDataTypes/
-/07_NumbersAndDates/
-/08_Strings/
-/09_ArraysAndCollections/
-/10_InheritanceAndPolymorphism/
-/11_AdvancedOOPFeatures/
-/12_ExceptionsDebuggingAndTesting/
-/13_FilesAndNetwork/
-/14_SQLAndHibernate/
-/15_Multithreading/
-/17_SpringBootWebDevelopment/
-/18_NoSQL/
-/19_Performance/
-/20_DesktopApp/
-/23_DistributedStorage/
+
